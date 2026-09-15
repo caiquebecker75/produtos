@@ -32,10 +32,20 @@
   {
     "slug": "savencia-display-pp-polenguinho",
     "cliente": "Savencia Fromage & Dairy",
-    "nome": "Display PP Polenguinho",
+    "nome": "Displays Polenguinho",
     "criado": "2026-09-15",
     "cor": "#2F6BFF",
-    "sigla": "PP"
+    "sigla": "PP",
+    "pecas": [
+      {
+        "id": "pp",
+        "nome": "Display PP"
+      },
+      {
+        "id": "m",
+        "nome": "Display M"
+      }
+    ]
   },
   {
     "slug": "modelo",
