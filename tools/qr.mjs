@@ -5,9 +5,9 @@
 //   etiqueta.pdf / etiqueta.png → etiqueta pronta 10 × 15 cm com a identidade 75 LAB (PNG em 300 dpi)
 // O QR abre a página com ?qr=1: pede nome, telefone e loja e pega a localização.
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
-import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import puppeteer from 'puppeteer-core';
 import qrcode from 'qrcode-generator';
 import sharp from 'sharp';
 
@@ -73,10 +73,22 @@ const tmp = path.join(raiz, '.work', `etiqueta-${slug}.html`);
 mkdirSync(path.dirname(tmp), { recursive: true });
 writeFileSync(tmp, etiqueta);
 
-const chrome = '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
-const base = ['--headless=new', '--disable-gpu', '--hide-scrollbars', '--no-first-run', '--virtual-time-budget=6000', `--user-data-dir=${path.join(raiz, '.work', 'chrome')}`];
-execFileSync(chrome, [...base, '--no-pdf-header-footer', `--print-to-pdf=${path.join(saida, 'etiqueta.pdf')}`, `file://${tmp}`], { stdio: 'ignore' });
-// 100 × 150 mm = 378 × 567 px CSS; fator 3.125 → 1181 × 1772 px (300 dpi)
-execFileSync(chrome, [...base, '--window-size=378,567', '--force-device-scale-factor=3.125', `--screenshot=${path.join(saida, 'etiqueta.png')}`, `file://${tmp}`], { stdio: 'ignore' });
+// Chrome controlado pelo puppeteer (o Chrome headless puro não encerra sozinho depois de imprimir)
+const browser = await puppeteer.launch({
+  executablePath: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  headless: true,
+  args: ['--no-first-run', '--hide-scrollbars'],
+});
+try {
+  const page = await browser.newPage();
+  // 100 × 150 mm = 378 × 567 px CSS; fator 3.125 → 1181 × 1772 px (300 dpi)
+  await page.setViewport({ width: 378, height: 567, deviceScaleFactor: 3.125 });
+  await page.goto(`file://${tmp}`, { waitUntil: 'networkidle0', timeout: 30000 });
+  await page.evaluate(() => document.fonts.ready);
+  await page.pdf({ path: path.join(saida, 'etiqueta.pdf'), width: '100mm', height: '150mm', printBackground: true, pageRanges: '1' });
+  await page.screenshot({ path: path.join(saida, 'etiqueta.png') });
+} finally {
+  await browser.close();
+}
 
 console.log(`QR → ${url}\n${saida}/ qr-code.svg · qr-code.png · etiqueta.pdf · etiqueta.png`);

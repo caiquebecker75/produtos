@@ -48,7 +48,7 @@ section { position: relative; }
   position: sticky; top: 0; z-index: 20; background: rgba(255,255,255,.94);
   -webkit-backdrop-filter: saturate(1.4) blur(10px); backdrop-filter: saturate(1.4) blur(10px);
 }
-.top .wrap { display: flex; align-items: center; justify-content: space-between; gap: 14px; height: 64px; }
+.top > .wrap { display: flex; align-items: center; justify-content: space-between; gap: 14px; height: 64px; }
 .top .logo img { height: 34px; width: auto; }
 .top .slogan { font-family: var(--anton); font-size: 12px; letter-spacing: 2.2px; text-transform: uppercase; color: var(--ink2); }
 .btn-reg {
@@ -184,6 +184,7 @@ section { position: relative; }
   content: ""; position: absolute; right: -30vw; top: 120px; width: 80vw; aspect-ratio: 1; border-radius: 50%;
   background: var(--lime-s); pointer-events: none;
 }
+.medidas > .wrap { position: relative; z-index: 1; }
 .med-grid { position: relative; display: grid; gap: 26px; margin-top: 34px; }
 .desenho { background: #fff; border-radius: var(--r); padding: 18px; box-shadow: 0 0 0 1px var(--rule); display: grid; place-items: center; }
 .desenho img { max-height: 520px; width: auto; }
