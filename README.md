@@ -4,6 +4,7 @@ Toda peça produzida pela 75 LAB sai com uma página de produto e um **QR code i
 
 - **Página:** objetivo da peça, montagem passo a passo, vídeo, realidade aumentada (tamanho real no chão da loja), medidas e ficha técnica, checklist e FAQ de execução.
 - **Senha de acesso:** cada página só abre com a senha definida no painel (card "Projetos e senhas"). Vale para o QR e para o link.
+- **Acesso livre:** botão "Liberar sem senha" no painel, por página. A página abre direto e o registro entra sem senha; "Exigir senha" volta a pedir a senha guardada.
 - **No ar / fora do ar:** botão no painel. Fora do ar, o link e o QR mostram "Página fora do ar" (sem senha e sem conteúdo) e nenhum registro é aceito.
 - **QR code** (`?qr=1`): depois da senha, abre um mini questionário (nome, telefone, loja) e pega a **localização do aparelho** na hora.
 - **Painel interno** (`/painel/`): registros em tempo real, mapa, filtros por projeto e período, exportação para Excel, senha de cada página e etiqueta QR pronta para imprimir (`/painel/qr.html?p=<pasta>`). Só entra conta Google **@75lab.com.br**.
@@ -30,7 +31,8 @@ git add -A && git commit -m "Página <peça>" && git push
 ```
 
 `tools/qr.mjs` grava em `<pasta>/qr/`: `qr-code.svg` e `qr-code.png` (só o código, para a arte da embalagem)
-e `etiqueta.pdf` / `etiqueta.png` (etiqueta pronta 10 × 15 cm, 300 dpi).
+e `etiqueta.pdf` / `etiqueta.png` (etiqueta pronta 10 × 15 cm, 300 dpi), mais `etiqueta-livre.pdf` / `.png` sem o passo da senha
+(o link "Etiqueta QR" do painel mostra essa quando a página está com acesso livre).
 
 ### O JSON da página
 
@@ -69,6 +71,14 @@ Texto aceita `**negrito**`. Campos: `slug`, `cliente`, `logoCliente`, `nome`, `l
   O registro de instalação também leva `senhaHash` e é recusado se a senha estiver errada ou tiver sido trocada.
 - O aparelho guarda o hash depois de acertar; ao trocar a senha no painel, todos precisam digitar a nova.
 - A senha protege o fluxo (quem registra e quem vê a página pelo QR), não o conteúdo: o texto da página está neste repositório público.
+
+## Acesso livre (página sem senha)
+
+- Campo `semSenha` (com `semSenhaEm`, `semSenhaPor`) no mesmo documento `paginas/{pasta}`. O painel grava com merge, então no ar/fora do ar e acesso livre não se apagam.
+- Ligado: `assets/acesso.js` pula a tela de senha, o registro vai sem `senhaHash` e as regras (`paginaSemSenha`) aceitam. Fora do ar continua valendo por cima.
+- A senha em `senhas/{pasta}` não é apagada: ao clicar "Exigir senha", volta a valer (quem entrou sem senha é recarregado e precisa digitar).
+- O aparelho lembra que a página estava livre (`livre75:<pasta>`) para abrir sem internet na loja.
+- Nas regras, campo que pode faltar no documento é lido com `.get('campo', padrão)`: ler `data.ativo` num documento sem `ativo` dá erro e recusa tudo.
 
 ## No ar / fora do ar
 

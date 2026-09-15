@@ -29,7 +29,7 @@ service cloud.firestore {
     // página tirada do ar no painel (paginas/{projeto}.ativo == false); sem documento = no ar
     function paginaNoAr(projeto) {
       return !exists(/databases/$(database)/documents/paginas/$(projeto))
-        || get(/databases/$(database)/documents/paginas/$(projeto)).data.ativo != false;
+        || get(/databases/$(database)/documents/paginas/$(projeto)).data.get('ativo', true) != false; // documento só com semSenha não tem ativo
     }
 
     function geoValida(g) {
