@@ -51,7 +51,7 @@
     <div class="topo"><img src="../assets/img/logo-75lab-preto.png" alt="75 LAB" width="51" height="36"></div>
     <div class="eyebrow">Etiqueta QR · 10 × 15 cm</div>
     <h1 id="titulo">Etiqueta <b>da peça</b></h1>
-    <p class="info">Imprima e mande junto com a peça. Quem escanear vai precisar da <b>senha de acesso</b> definida no painel.</p>
+    <p class="info" id="info">Imprima e mande junto com a peça. Quem escanear vai precisar da <b>senha de acesso</b> definida no painel.</p>
     <div class="acoes">
       <button class="btn principal" id="imprimir" type="button">Imprimir <small>tamanho real 10 × 15 cm</small></button>
       <a class="btn" id="pdf" download>Baixar PDF <small>para a gráfica</small></a>
@@ -62,19 +62,34 @@
     <p class="url" id="url"></p>
   </div>
 </div>
-<script>
+<script type="module">
+  import { db } from '../assets/base.js?v=1';
   const slug = (new URLSearchParams(location.search).get('p') || '').replace(/[^a-z0-9-]/g, '');
   const base = `../${slug}/qr/`;
   const img = document.getElementById('img');
-  const nomes = { pdf: 'etiqueta.pdf', png: 'etiqueta.png', qrpng: 'qr-code.png', qrsvg: 'qr-code.svg' };
-  Object.entries(nomes).forEach(([id, arq]) => {
-    const a = document.getElementById(id);
-    a.href = base + arq;
-    a.setAttribute('download', `${slug}-${arq}`);
-  });
+  // sufixo '' = etiqueta com o passo da senha · '-livre' = página liberada sem senha no painel
+  const aplicar = (sufixo) => {
+    const nomes = { pdf: `etiqueta${sufixo}.pdf`, png: `etiqueta${sufixo}.png`, qrpng: 'qr-code.png', qrsvg: 'qr-code.svg' };
+    Object.entries(nomes).forEach(([id, arq]) => {
+      const a = document.getElementById(id);
+      a.href = base + arq;
+      a.setAttribute('download', `${slug}-${arq}`);
+    });
+    img.src = `${base}etiqueta${sufixo}.png?t=${Date.now()}`;
+  };
+  let livre = false;
+  try {
+    const { fs, db: banco } = await db();
+    const snap = await fs.getDoc(fs.doc(banco, 'paginas', slug));
+    livre = snap.exists() && snap.data().semSenha === true;
+  } catch {}
+  if (livre) {
+    document.getElementById('info').innerHTML = 'Imprima e mande junto com a peça. Esta página está com <b>acesso livre</b> no painel: a etiqueta não tem o passo da senha.';
+  }
   document.getElementById('url').textContent = `O QR abre: https://projetos.75lab.com.br/produtos/${slug}/?qr=1`;
-  img.src = base + 'etiqueta.png?t=' + Date.now();
+  aplicar(livre ? '-livre' : '');
   img.onerror = () => {
+    if (livre && img.src.includes('-livre')) return aplicar(''); // etiqueta sem senha ainda não gerada: mostra a padrão
     img.hidden = true;
     const f = document.getElementById('falta');
     f.innerHTML = slug

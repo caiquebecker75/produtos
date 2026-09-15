@@ -51,21 +51,37 @@ service cloud.firestore {
         && request.resource.data.atualizadoPor == request.auth.token.email;
     }
 
-    // no ar / fora do ar: qualquer um consulta uma página (a própria página precisa saber); só a equipe lista e muda
+    // acesso livre ligado no painel (paginas/{projeto}.semSenha == true): abre e registra sem senha
+    function paginaSemSenha(projeto) {
+      return exists(/databases/$(database)/documents/paginas/$(projeto))
+        && get(/databases/$(database)/documents/paginas/$(projeto)).data.get('semSenha', false) == true;
+    }
+
+    // cada botão do painel grava só a sua parte (merge): no ar/fora do ar em ativo + atualizadoEm/Por,
+    // acesso livre em semSenha + semSenhaEm/Por. Quem mudou um campo precisa carimbar data e e-mail dele.
+    function paginaValida(projeto) {
+      let d = request.resource.data;
+      let mudou = resource == null ? d.keys() : d.diff(resource.data).affectedKeys();
+      return equipe75()
+        && slugValido(projeto)
+        && d.keys().hasOnly(['ativo', 'atualizadoEm', 'atualizadoPor', 'semSenha', 'semSenhaEm', 'semSenhaPor'])
+        && (!('ativo' in d) || d.ativo is bool)
+        && (!('semSenha' in d) || d.semSenha is bool)
+        && (!mudou.hasAny(['ativo']) || (d.atualizadoEm == request.time && d.atualizadoPor == request.auth.token.email))
+        && (!mudou.hasAny(['semSenha']) || (d.semSenhaEm == request.time && d.semSenhaPor == request.auth.token.email));
+    }
+
+    // no ar / fora do ar e acesso livre: qualquer um consulta uma página (a própria página precisa saber); só a equipe lista e muda
     match /paginas/{projeto} {
       allow get: if true;
       allow list, delete: if equipe75();
-      allow create, update: if equipe75()
-        && slugValido(projeto)
-        && request.resource.data.keys().hasOnly(['ativo', 'atualizadoEm', 'atualizadoPor'])
-        && request.resource.data.ativo is bool
-        && request.resource.data.atualizadoEm == request.time
-        && request.resource.data.atualizadoPor == request.auth.token.email;
+      allow create, update: if paginaValida(projeto);
     }
 
     // "porta" da página: ler este caminho só é permitido com o hash da senha certa (o documento nem existe)
     match /portas/{projeto}/chaves/{hash} {
-      allow get: if slugValido(projeto) && paginaNoAr(projeto) && senhaConfere(projeto, hash);
+      allow get: if slugValido(projeto) && paginaNoAr(projeto)
+        && (senhaConfere(projeto, hash) || paginaSemSenha(projeto));
     }
 
     match /instalacoes/{id} {
@@ -86,7 +102,9 @@ service cloud.firestore {
         && (!('pecas' in request.resource.data) || (request.resource.data.pecas is list && request.resource.data.pecas.size() <= 20))
         && request.resource.data.criadoEm == request.time
         && paginaNoAr(request.resource.data.projeto)
-        && senhaConfere(request.resource.data.projeto, request.resource.data.senhaHash);
+        // página com acesso livre não manda senhaHash
+        && (paginaSemSenha(request.resource.data.projeto)
+          || senhaConfere(request.resource.data.projeto, request.resource.data.get('senhaHash', '')));
 
       allow read, update, delete: if equipe75();
     }

@@ -3,8 +3,8 @@
 // — depois da senha, a pessoa escolhe as peças que vai executar e a página mostra só essas
 // (o registro de instalação guarda quais foram). Blocos sem dados simplesmente não aparecem.
 // Texto aceita **negrito**. Ver modelo/index.html para os campos.
-import { iniciarRegistro } from './registro.js?v=4';
-import { exigirSenha } from './acesso.js?v=2';
+import { iniciarRegistro } from './registro.js?v=5';
+import { exigirSenha } from './acesso.js?v=3';
 import { escolherPecas } from './selecao.js?v=2';
 
 const $ = (s, el = document) => el.querySelector(s);

@@ -1,5 +1,7 @@
-// Acesso à página: (1) a página precisa estar no ar e (2) a pessoa precisa da senha que a equipe define no painel.
+// Acesso à página: (1) a página precisa estar no ar e (2) a pessoa precisa da senha que a equipe define no painel,
+// a não ser que o painel tenha liberado a página sem senha.
 // - paginas/{slug}.ativo == false → tela "fora do ar" (sem senha, sem conteúdo)
+// - paginas/{slug}.semSenha == true → abre direto (as regras também aceitam o registro sem senhaHash)
 // - senha conferida pelas regras do Firestore (portas/{slug}/chaves/{hash}); a senha nunca chega ao navegador.
 // Depois de acertar, o aparelho guarda o hash e só pede de novo se a senha for trocada no painel.
 import { db } from './base.js?v=1';
@@ -11,6 +13,7 @@ const ler = (k) => { try { return localStorage.getItem(k); } catch { return null
 const gravar = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} };
 
 export const chaveAcesso = (slug) => `acesso75:${slug}`;
+export const chaveLivre = (slug) => `livre75:${slug}`; // última vez que viu a página com acesso livre (vale sem internet)
 
 // true = senha certa · false = senha errada (ou página fora do ar) · lança erro = sem conexão
 async function conferir(slug, hash) {
@@ -24,12 +27,13 @@ async function conferir(slug, hash) {
   }
 }
 
-// true = no ar · false = tirada do ar no painel · null = não deu para saber (sem internet)
-async function paginaNoAr(slug) {
+// { ativo, livre } como está no painel · null = não deu para saber (sem internet)
+async function lerPagina(slug) {
   try {
     const { fs, db: base } = await db();
     const snap = await fs.getDoc(fs.doc(base, 'paginas', slug));
-    return !snap.exists() || snap.data().ativo !== false;
+    const d = snap.exists() ? snap.data() : {};
+    return { ativo: d.ativo !== false, livre: d.semSenha === true };
   } catch {
     return null;
   }
@@ -53,19 +57,24 @@ function telaForaDoAr(tela, P) {
   document.title = `Fora do ar · ${P.nome}`;
 }
 
+// resolve com o hash da senha · null quando a página está com acesso livre (sem senha)
 export async function exigirSenha(P) {
   const chave = chaveAcesso(P.slug);
-  const status = paginaNoAr(P.slug); // começa já, em paralelo
   const tela = document.createElement('div');
   tela.className = 'porta';
-
   const salvo = ler(chave);
+
+  // uma leitura antes de desenhar qualquer coisa: fora do ar ou acesso livre não podem piscar a tela de senha
+  const status = await lerPagina(P.slug);
+  if (status && !status.ativo) {
+    document.body.appendChild(tela);
+    telaForaDoAr(tela, P);
+    return new Promise(() => {});
+  }
+  if (status) gravar(chaveLivre(P.slug), status.livre ? '1' : null);
+  if (status ? status.livre : ler(chaveLivre(P.slug))) return salvo || null;
+
   if (salvo) {
-    if ((await status) === false) {
-      document.body.appendChild(tela);
-      telaForaDoAr(tela, P);
-      return new Promise(() => {});
-    }
     try {
       if (await conferir(P.slug, salvo)) return salvo;
       gravar(chave, null); // senha trocada no painel
@@ -90,7 +99,6 @@ export async function exigirSenha(P) {
         <p class="lgpd">Não recebeu a senha? Peça ao responsável pela instalação ou fale com a 75 LAB: <a href="tel:+551150267313">11 5026-7313</a>.</p>
       </form>`;
     document.body.appendChild(tela);
-    status.then((noAr) => { if (noAr === false) telaForaDoAr(tela, P); });
 
     const form = $('form', tela);
     const input = form.senha;
@@ -123,7 +131,13 @@ export async function exigirSenha(P) {
           tela.remove();
           return resolve(hash);
         }
-        if ((await paginaNoAr(P.slug)) === false) return telaForaDoAr(tela, P);
+        const agora = await lerPagina(P.slug);
+        if (agora && !agora.ativo) return telaForaDoAr(tela, P);
+        if (agora?.livre) { // liberada no painel enquanto a pessoa digitava
+          gravar(chaveLivre(P.slug), '1');
+          tela.remove();
+          return resolve(null);
+        }
         tentativas++;
         input.setAttribute('aria-invalid', 'true');
         input.select();

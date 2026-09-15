@@ -2,7 +2,7 @@
 // Pede nome, telefone e loja, pega a localização do aparelho e grava em Firestore/instalacoes,
 // que só a equipe 75 LAB lê no painel (/painel/). No enxoval, grava também as peças executadas.
 import { db } from './base.js?v=1';
-import { chaveAcesso } from './acesso.js?v=2';
+import { chaveAcesso, chaveLivre } from './acesso.js?v=3';
 
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -173,7 +173,7 @@ export function iniciarRegistro(P, { toast, ICON, senhaHash, pecas = () => [], n
           geoStatus: geo.estado === 'buscando' ? 'tempo' : geo.estado,
           origem: veioDoQR ? 'qr' : 'link',
           aparelho: navigator.userAgent.slice(0, 200),
-          senhaHash,
+          ...(senhaHash ? { senhaHash } : {}), // página com acesso livre não tem senha
           ...(lista.length ? { pecas: lista } : {}),
           criadoEm: fs.serverTimestamp(),
         });
@@ -199,9 +199,9 @@ export function iniciarRegistro(P, { toast, ICON, senhaHash, pecas = () => [], n
       } catch (e) {
         console.error(e);
         if (e.code === 'permission-denied') {
-          // a senha foi trocada ou a página foi tirada do ar no painel depois que este aparelho entrou
-          try { localStorage.removeItem(chaveAcesso(P.slug)); } catch {}
-          erro.textContent = 'A senha desta página foi trocada ou a página saiu do ar. Recarregando…';
+          // senha trocada, acesso livre desligado ou página tirada do ar no painel depois que este aparelho entrou
+          try { localStorage.removeItem(chaveAcesso(P.slug)); localStorage.removeItem(chaveLivre(P.slug)); } catch {}
+          erro.textContent = 'O acesso desta página mudou (senha nova ou página fora do ar). Recarregando…';
           erro.hidden = false;
           enviar.textContent = 'Aguarde…';
           setTimeout(() => location.reload(), 2600);

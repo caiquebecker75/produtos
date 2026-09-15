@@ -77,7 +77,7 @@ A.onAuthStateChanged(auth, async (user) => {
 let registros = [];
 let catalogo = [];
 let mapa, camada;
-let paginas = {};         // slug → { ativo, atualizadoEm, atualizadoPor }
+let paginas = {};         // slug → { ativo, atualizadoEm, atualizadoPor, semSenha, semSenhaEm, semSenhaPor }
 let senhas = {};          // slug → { senha, atualizadoEm, atualizadoPor }
 let editando = null;      // slug com o campo de senha aberto
 let rascunho = '';
@@ -219,6 +219,7 @@ function desenhar() {
       })()}
       <span class="plinks"><a href="#" data-filtrar="${esc(s)}">Filtrar</a><a href="${BASE_PAGINAS}${encodeURIComponent(s)}/" target="_blank" rel="noopener">Página</a><a href="qr.html?p=${encodeURIComponent(s)}" target="_blank" rel="noopener">Etiqueta QR</a></span>
       ${linhaStatus(s)}
+      ${linhaAcesso(s)}
       ${linhaSenha(s)}
     </li>`;
   }).join('') || '<li class="pc">Nenhum projeto ainda.</li>';
@@ -316,6 +317,7 @@ $('#exportar').addEventListener('click', () => {
 // ---------------------------------------------------------------- senhas de acesso das páginas
 function linhaSenha(slug) {
   const atual = senhas[slug];
+  const livre = paginas[slug]?.semSenha === true;
   if (editando === slug) {
     return `<form class="psenha editar" data-senha-form="${esc(slug)}">
       <input name="senha" value="${esc(rascunho)}" placeholder="Nova senha (mín. 4 caracteres)" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="40">
@@ -324,7 +326,9 @@ function linhaSenha(slug) {
     </form>`;
   }
   if (!atual) {
-    return `<div class="psenha sem"><span>Sem senha: <b>página bloqueada</b></span><button type="button" class="btn-mini lime" data-senha-editar="${esc(slug)}">Criar senha</button></div>`;
+    return livre
+      ? `<div class="psenha"><span>Nenhuma senha criada <small>só é preciso se voltar a exigir senha</small></span><button type="button" class="btn-mini" data-senha-editar="${esc(slug)}">Criar senha</button></div>`
+      : `<div class="psenha sem"><span>Nenhuma senha criada: <b>página bloqueada</b></span><button type="button" class="btn-mini lime" data-senha-editar="${esc(slug)}">Criar senha</button></div>`;
   }
   const ver = visiveis.has(slug);
   const quando = atual.atualizadoEm?.toDate?.().toLocaleDateString('pt-BR') || '';
@@ -334,6 +338,7 @@ function linhaSenha(slug) {
     <button type="button" class="btn-mini" data-senha-copiar="${esc(slug)}">Copiar</button>
     <button type="button" class="btn-mini" data-senha-editar="${esc(slug)}">Trocar</button>
     ${quando ? `<small>alterada em ${quando}${atual.atualizadoPor ? ` por ${esc(atual.atualizadoPor.split('@')[0])}` : ''}</small>` : ''}
+    ${livre ? '<small>Acesso livre ligado: esta senha fica guardada e volta a valer quando exigir senha.</small>' : ''}
   </div>`;
 }
 
@@ -419,11 +424,45 @@ $('#lista-projetos').addEventListener('click', async (e) => {
   if (!confirm(msg)) return;
   b.disabled = true;
   try {
-    await F.setDoc(F.doc(db, 'paginas', slug), { ativo: !tirar, atualizadoEm: F.serverTimestamp(), atualizadoPor: usuarioEmail });
+    // merge: não apaga o acesso livre (semSenha) gravado pelo outro botão
+    await F.setDoc(F.doc(db, 'paginas', slug), { ativo: !tirar, atualizadoEm: F.serverTimestamp(), atualizadoPor: usuarioEmail }, { merge: true });
     toast(tirar ? 'Página fora do ar.' : 'Página no ar de novo.');
   } catch (err) {
     console.error(err);
     toast('Não foi possível mudar o status da página.');
+    b.disabled = false;
+  }
+});
+
+// ---------------------------------------------------------------- acesso livre (sem senha) por página
+function linhaAcesso(slug) {
+  const p = paginas[slug];
+  const livre = p?.semSenha === true;
+  const quando = p?.semSenhaEm?.toDate?.().toLocaleDateString('pt-BR') || '';
+  return `<div class="pstatus pacesso ${livre ? 'livre' : ''}">
+    <span class="estado"><i></i>${livre ? 'Acesso livre, sem senha' : 'Acesso com senha'}</span>
+    <button type="button" class="btn-mini ${livre ? 'escuro' : 'contorno'}" data-acesso="${esc(slug)}">${livre ? 'Exigir senha' : 'Liberar sem senha'}</button>
+    ${quando ? `<small>${livre ? 'liberada sem senha' : 'senha exigida de novo'} em ${quando}${p.semSenhaPor ? ` por ${esc(p.semSenhaPor.split('@')[0])}` : ''}</small>` : ''}
+  </div>`;
+}
+
+$('#lista-projetos').addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-acesso]');
+  if (!b) return;
+  const slug = b.dataset.acesso;
+  const liberar = paginas[slug]?.semSenha !== true;
+  const nome = nomeProjeto(slug).nome;
+  const msg = liberar
+    ? `Liberar "${nome}" sem senha?\n\nQualquer pessoa com o link ou o QR abre a página e registra a instalação sem digitar senha. A senha atual fica guardada e volta a valer quando você exigir senha de novo.\n\nPara imprimir, use a etiqueta sem o passo da senha (link Etiqueta QR).`
+    : `Exigir senha em "${nome}" de novo?\n\n${senhas[slug] ? 'Quem abrir o link ou o QR vai precisar digitar a senha atual.' : 'Esta página não tem senha criada: ela fica bloqueada até alguém criar uma.'}`;
+  if (!confirm(msg)) return;
+  b.disabled = true;
+  try {
+    await F.setDoc(F.doc(db, 'paginas', slug), { semSenha: liberar, semSenhaEm: F.serverTimestamp(), semSenhaPor: usuarioEmail }, { merge: true });
+    toast(liberar ? 'Página liberada: abre sem senha.' : 'A página voltou a pedir senha.');
+  } catch (err) {
+    console.error(err);
+    toast('Não foi possível mudar o acesso da página.');
     b.disabled = false;
   }
 });

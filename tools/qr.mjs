@@ -38,7 +38,8 @@ await sharp(Buffer.from(svg), { density: 1200 }).resize(2048, 2048, { kernel: 'n
 
 // etiqueta
 const logo = (f) => `data:image/png;base64,${readFileSync(path.join(raiz, 'assets/img', f)).toString('base64')}`;
-const etiqueta = `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
+// comSenha = false → etiqueta-livre.*, sem o passo da senha (para página liberada sem senha no painel)
+const montar = (comSenha) => `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Lexend:wght@200;300;500;600&display=swap" rel="stylesheet">
 <style>
 @page { size: 100mm 150mm; margin: 0; }
@@ -63,17 +64,15 @@ h1 b { font-weight: 600; display: block; }
 <div class="top"><img src="${logo('logo-75lab-preto.png')}" alt="75 LAB"><span>Ideia boa é a que acontece</span></div>
 <h1>Escaneie <b>antes de montar</b></h1>
 <div class="qr">${svg}<ol>
-  ${(P.kit?.length
-      ? ['Digite a senha de acesso passada pelo responsável', 'Escolha as peças que vai instalar nesta loja', 'Registre a loja onde as peças vão ficar', 'Siga a montagem de cada peça e o checklist']
-      : ['Digite a senha de acesso passada pelo responsável', 'Registre a loja onde a peça vai ficar',
-      ...(P.ar?.glb ? ['Veja a peça no local em realidade aumentada'] : []), 'Siga o passo a passo e o checklist'])
+  ${[...(comSenha ? ['Digite a senha de acesso passada pelo responsável'] : []), ...(P.kit?.length
+      ? ['Escolha as peças que vai instalar nesta loja', 'Registre a loja onde as peças vão ficar', 'Siga a montagem de cada peça e o checklist']
+      : ['Registre a loja onde a peça vai ficar',
+      ...(P.ar?.glb ? ['Veja a peça no local em realidade aumentada'] : []), 'Siga o passo a passo e o checklist'])]
     .map((t, i) => `<li><i>${i + 1}</i><span>${t}</span></li>`).join('')}
 </ol></div>
 <div class="peca"><small>${esc(P.cliente)}</small><b>${esc(P.nome)} ${esc(P.linha || '')}</b><span>projetos.75lab.com.br/produtos/${esc(slug)}</span></div>
 </body></html>`;
-const tmp = path.join(raiz, '.work', `etiqueta-${slug}.html`);
-mkdirSync(path.dirname(tmp), { recursive: true });
-writeFileSync(tmp, etiqueta);
+mkdirSync(path.join(raiz, '.work'), { recursive: true });
 
 // Chrome controlado pelo puppeteer (o Chrome headless puro não encerra sozinho depois de imprimir)
 const browser = await puppeteer.launch({
@@ -85,12 +84,16 @@ try {
   const page = await browser.newPage();
   // 100 × 150 mm = 378 × 567 px CSS; fator 3.125 → 1181 × 1772 px (300 dpi)
   await page.setViewport({ width: 378, height: 567, deviceScaleFactor: 3.125 });
-  await page.goto(`file://${tmp}`, { waitUntil: 'networkidle0', timeout: 30000 });
-  await page.evaluate(() => document.fonts.ready);
-  await page.pdf({ path: path.join(saida, 'etiqueta.pdf'), width: '100mm', height: '150mm', printBackground: true, pageRanges: '1' });
-  await page.screenshot({ path: path.join(saida, 'etiqueta.png') });
+  for (const [sufixo, comSenha] of [['', true], ['-livre', false]]) {
+    const tmp = path.join(raiz, '.work', `etiqueta-${slug}${sufixo}.html`);
+    writeFileSync(tmp, montar(comSenha));
+    await page.goto(`file://${tmp}`, { waitUntil: 'networkidle0', timeout: 30000 });
+    await page.evaluate(() => document.fonts.ready);
+    await page.pdf({ path: path.join(saida, `etiqueta${sufixo}.pdf`), width: '100mm', height: '150mm', printBackground: true, pageRanges: '1' });
+    await page.screenshot({ path: path.join(saida, `etiqueta${sufixo}.png`) });
+  }
 } finally {
   await browser.close();
 }
 
-console.log(`QR → ${url}\n${saida}/ qr-code.svg · qr-code.png · etiqueta.pdf · etiqueta.png`);
+console.log(`QR → ${url}\n${saida}/ qr-code.svg · qr-code.png · etiqueta.pdf/png · etiqueta-livre.pdf/png (sem o passo da senha)`);
