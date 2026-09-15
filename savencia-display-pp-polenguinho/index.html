@@ -17,7 +17,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Lexend:wght@200;300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../assets/produto.css?v=5">
+<link rel="stylesheet" href="../assets/produto.css?v=7">
 <script>(function(){var u=navigator.userAgent,m=/Android|iPhone|iPad|iPod/i.test(u)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);document.documentElement.classList.add(m?'is-mobile':'is-desktop')})()</script>
 <script type="application/json" id="projeto">
 {
@@ -27,43 +27,132 @@
   "nome": "Display PP",
   "linha": "Polenguinho",
   "subtitulo": "Treinamento de montagem",
-  "tipo": "Display de chão em polionda, com pés removíveis e roller balls",
+  "tipo": "Display de chão em polionda, com pés removíveis e roller balls (versão Update)",
   "imagem": "img/display.webp",
-
   "objetivo": {
     "texto": "Levar o portfólio **Polenguinho** para fora da gôndola com um display estreito, pensado para a **bandeja de 14 unidades de 17 g**, que cabe em pontos de circulação e deixa a marca à vista do shopper.",
     "pontos": [
-      { "titulo": "Exposição do portfólio", "texto": "4 bandejas com 4 caixas cada: **16 caixas** de Polenguinho abastecidas no ponto." },
-      { "titulo": "Ocupa pouco espaço", "texto": "Base de **18 × 24 cm** e 1,40 m de altura: entra em corredor, ponta de caixa e ilha." },
-      { "titulo": "Montagem sem ferramenta", "texto": "Fita dupla face VHB já instalada e pés de encaixe. Tudo vem na caixa." }
+      {
+        "titulo": "Exposição do portfólio",
+        "texto": "4 bandejas com 4 caixas cada: **16 caixas** de Polenguinho abastecidas no ponto."
+      },
+      {
+        "titulo": "Ocupa pouco espaço",
+        "texto": "Base de **18 × 24 cm** e 1,40 m de altura: entra em corredor, ponta de caixa e ilha."
+      },
+      {
+        "titulo": "Montagem sem ferramenta",
+        "texto": "Fita dupla face VHB já instalada e pés de encaixe. Tudo vem na caixa."
+      }
     ]
   },
-
   "pecas": [
-    { "qtd": "1", "nome": "Corpo do display" },
-    { "qtd": "1", "nome": "Testeira" },
-    { "qtd": "4", "nome": "Conjuntos de pés (formato de L)" }
+    {
+      "qtd": "1",
+      "nome": "Corpo do display (com fita dupla face já aplicada)"
+    },
+    {
+      "qtd": "1",
+      "nome": "Testeira"
+    },
+    {
+      "qtd": "4",
+      "nome": "Pés de encaixe com rodízios"
+    },
+    {
+      "qtd": "1",
+      "nome": "Tag com o QR code de montagem"
+    }
   ],
-  "ferramentas": "Não precisa de chave nem parafuso: a montagem usa só a fita dupla face VHB já aplicada e os pés de encaixe.",
-
+  "ferramentas": "Não precisa de chave nem parafuso: a montagem usa só a fita dupla face VHB já aplicada e os encaixes.",
   "montagem": [
-    { "titulo": "Separe as peças", "texto": "Abra o pacote e separe as **3 peças** antes de iniciar a montagem: o corpo do display, a testeira e o pacote com 4 conjuntos de pés." },
-    { "titulo": "Forme a coluna base", "texto": "Dobre o corpo seguindo os vincos para formar a coluna base do display. Fixe com a **fita dupla face já instalada** no material, colando na área branca e alinhando o material." },
-    { "titulo": "Monte as prateleiras", "texto": "Dobre cada prateleira para baixo, vincando a parte frontal e **encaixando a parte traseira** nos encaixes da costa do display." },
-    { "titulo": "Encaixe a testeira", "texto": "Encaixe a testeira no topo até ficar **firme**." },
-    { "titulo": "Coloque os pés", "texto": "Encaixe os pés em **formato de L** em cada uma das quinas na base inferior do material." }
+    {
+      "titulo": "Separe as peças",
+      "texto": "Abra a embalagem e separe o **corpo do display**, a **testeira**, os **4 pés com rodízios** e a tag com o QR code."
+    },
+    {
+      "titulo": "Forme a coluna",
+      "texto": "Dobre o corpo nos vincos. Tire o protetor da **fita dupla face** e cole na **área branca**, alinhando as pontas de cima e de baixo.",
+      "alerta": "As pontas precisam ficar certinhas em cima e embaixo: é isso que deixa o display reto."
+    },
+    {
+      "titulo": "Monte as prateleiras",
+      "texto": "Dobre cada prateleira **para baixo**, formando o vinco da frente, e encaixe a aba de trás **nas costas do display**, empurrando até sair no final."
+    },
+    {
+      "titulo": "Encaixe a testeira",
+      "texto": "Encaixe a testeira nas **duas entradas** do topo até ficar firme."
+    },
+    {
+      "titulo": "Coloque os pés",
+      "texto": "Levante o display e encaixe cada pé **sempre na quina** da base, até ficar certinho."
+    },
+    {
+      "titulo": "Abasteça e precifique",
+      "texto": "Em cada prateleira vão **duas caixas embaixo e duas em cima**. Coloque a etiqueta de preço **na faixa da prateleira**."
+    }
   ],
-
-  "video": null,
+  "video": {
+    "mp4": "video/montagem.mp4",
+    "poster": "video/capa.jpg",
+    "orientacao": "vertical",
+    "duracao": "3 min",
+    "texto": "Montagem completa na fábrica da 75 LAB: da dobra do corpo ao abastecimento e ao transporte do display cheio.",
+    "capitulos": [
+      {
+        "t": 0,
+        "titulo": "O que vem na caixa"
+      },
+      {
+        "t": 17,
+        "titulo": "Coluna e fita dupla face"
+      },
+      {
+        "t": 44,
+        "titulo": "Prateleiras"
+      },
+      {
+        "t": 78,
+        "titulo": "Testeira"
+      },
+      {
+        "t": 95,
+        "titulo": "Pés com rodízios"
+      },
+      {
+        "t": 110,
+        "titulo": "Abastecimento"
+      },
+      {
+        "t": 141,
+        "titulo": "Preço"
+      },
+      {
+        "t": 152,
+        "titulo": "Como mover o display cheio"
+      }
+    ]
+  },
   "ar": null,
-
   "medidas": {
     "desenho": "img/dimensional.webp",
     "legenda": "Medidas em milímetros: vista frontal e lateral",
     "principais": [
-      { "rotulo": "Altura", "valor": "140", "unidade": "cm" },
-      { "rotulo": "Largura", "valor": "18", "unidade": "cm" },
-      { "rotulo": "Profundidade", "valor": "24", "unidade": "cm" }
+      {
+        "rotulo": "Altura",
+        "valor": "140",
+        "unidade": "cm"
+      },
+      {
+        "rotulo": "Largura",
+        "valor": "18",
+        "unidade": "cm"
+      },
+      {
+        "rotulo": "Profundidade",
+        "valor": "24",
+        "unidade": "cm"
+      }
     ],
     "grupos": [
       {
@@ -73,61 +162,125 @@
       {
         "titulo": "Abastecimento / planograma",
         "itens": [
-          ["Bandejas no display", "4"],
-          ["Caixas por bandeja", "4 (14 unidades cada)"],
-          ["Abastecimento total", "16 caixas"],
-          ["Peso sem abastecimento", "720 g"],
-          ["Peso com abastecimento", "18,1 kg"]
+          [
+            "Bandejas no display",
+            "4"
+          ],
+          [
+            "Caixas por bandeja",
+            "4 (14 unidades cada)"
+          ],
+          [
+            "Abastecimento total",
+            "16 caixas"
+          ],
+          [
+            "Peso sem abastecimento",
+            "720 g"
+          ],
+          [
+            "Peso com abastecimento",
+            "18,1 kg"
+          ]
         ]
       },
       {
         "titulo": "Embalagem e armazenamento",
         "itens": [
-          ["Unidades por embalagem", "1"],
-          ["Tamanho da caixa", "135 × 43 × 6 cm"],
-          ["Peso bruto por pacote", "750 g"],
-          ["Empilhamento", "25 pacotes"]
+          [
+            "Unidades por embalagem",
+            "1"
+          ],
+          [
+            "Tamanho da caixa",
+            "135 × 43 × 6 cm"
+          ],
+          [
+            "Peso bruto por pacote",
+            "750 g"
+          ],
+          [
+            "Empilhamento",
+            "25 pacotes"
+          ]
         ]
       }
-    ]
+    ],
+    "planificado": "img/planificado.webp",
+    "legendaPlanificado": "Arte planificada do Update Display PP (corpo, prateleiras e testeira)"
   },
-
   "checklist": [
     {
       "grupo": "Antes de montar",
       "itens": [
-        "Conferi as 3 peças: corpo, testeira e 4 conjuntos de pés",
-        "Escolhi um ponto plano, sem obstruir corredor nem saída de emergência"
+        "Conferi as peças: corpo, testeira, 4 pés com rodízios e a tag com QR code",
+        "Vi a peça no local em realidade aumentada e o espaço funciona",
+        "Escolhi um ponto plano, sem bloquear corredor nem saída de emergência"
       ]
     },
     {
       "grupo": "Montagem",
       "itens": [
-        "Coluna base dobrada nos vincos e colada na área branca, bem alinhada",
-        "As 4 prateleiras dobradas e encaixadas nas costas do display",
-        "Testeira encaixada e firme",
-        "4 pés em L encaixados nas quinas da base"
+        "Coluna colada na área branca, com as pontas alinhadas em cima e embaixo",
+        "As 4 prateleiras dobradas para baixo e encaixadas nas costas até o final",
+        "Testeira encaixada nas duas entradas e firme",
+        "4 pés encaixados nas quinas da base"
       ]
     },
     {
       "grupo": "Abastecimento",
       "itens": [
-        "4 caixas de Polenguinho em cada bandeja (16 no total)",
-        "Só produtos do planograma: nada de itens mais pesados ou de outras marcas",
-        "Display firme, sem inclinar para frente depois de abastecido"
+        "Duas caixas embaixo e duas em cima em cada prateleira (16 no total)",
+        "Só Polenguinho do planograma, nada de produtos mais pesados",
+        "Preço colocado na faixa da prateleira",
+        "Display firme e reto depois de abastecido"
       ]
     }
   ],
-
   "faq": [
-    { "p": "Como acessar os vídeos de treinamento?", "r": "Os vídeos de treinamento ficam organizados por material. Quando o vídeo desta peça estiver disponível, ele aparece nesta página, logo depois do passo a passo de montagem." },
-    { "p": "O material suporta produtos mais pesados?", "r": "Cada display é criado especificamente para os produtos do planograma escolhidos pelo time de trade marketing. Colocar produtos diferentes do planograma pode **comprometer a estrutura** do material." },
-    { "p": "Preciso de alguma chave ou parafuso para fazer a montagem?", "r": "Não. Toda a montagem deve ser feita com os materiais já inclusos na caixa. Para este display, apenas a **fita dupla face VHB** e os **pés encaixáveis**." },
-    { "p": "Como limpar as peças de polionda, acrílico e metal?", "r": "Para todas as estruturas, um **pano úmido** é suficiente. Evite produtos abrasivos que possam riscar ou remover o acabamento." }
-  ]
+    {
+      "p": "Onde vejo o vídeo de montagem?",
+      "r": "Aqui mesmo, na seção **Vídeo**. Toque num capítulo para pular direto para a etapa."
+    },
+    {
+      "p": "Posso mover o display depois de abastecido?",
+      "r": "Pode, com cuidado: ele tem **rodízios nos pés**. Arraste devagar, sem tombar, e não levante pelo topo nem pela testeira."
+    },
+    {
+      "p": "Onde coloco a etiqueta de preço?",
+      "r": "Na **faixa da frente da prateleira**, abaixo dos produtos."
+    },
+    {
+      "p": "O material aguenta produtos mais pesados?",
+      "r": "O display foi criado para o planograma de Polenguinho. Colocar outros produtos pode **comprometer a estrutura** do material."
+    },
+    {
+      "p": "Preciso de chave ou parafuso?",
+      "r": "Não. Toda a montagem é feita com o que vem na caixa: **fita dupla face VHB** e **encaixes**."
+    },
+    {
+      "p": "Como limpar o display?",
+      "r": "Um **pano úmido** é suficiente. Evite produtos abrasivos que possam riscar ou remover a impressão."
+    }
+  ],
+  "galeria": [
+    {
+      "src": "img/display.webp",
+      "legenda": "Frente e lateral “Onde está sua Fominha?”"
+    },
+    {
+      "src": "img/vista-regua.webp",
+      "legenda": "Lateral com a régua “Quem está maior”"
+    },
+    {
+      "src": "img/detalhe-testeira.webp",
+      "legenda": "Testeira e prateleira superior"
+    }
+  ],
+  "tempoMontagem": "3 minutos"
 }
 </script>
-<script type="module" src="../assets/produto.js?v=3"></script>
+<script type="module" src="../assets/produto.js?v=5"></script>
 </head>
 <body>
 <div id="app"></div>

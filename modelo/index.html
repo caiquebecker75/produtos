@@ -11,7 +11,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Lexend:wght@200;300;400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../assets/produto.css?v=5">
+<link rel="stylesheet" href="../assets/produto.css?v=7">
 <script>(function(){var u=navigator.userAgent,m=/Android|iPhone|iPad|iPod/i.test(u)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);document.documentElement.classList.add(m?'is-mobile':'is-desktop')})()</script>
 <!--
   COMO CRIAR UMA PÁGINA NOVA
@@ -19,8 +19,9 @@
   2. Troque o JSON abaixo. Bloco sem dados = bloco escondido (ex.: "video": null).
   3. Imagens em <pasta>/img/ (render sem fundo em .webp, logo do cliente, desenho técnico).
   4. 3D: publicar no repo "ar" (pipeline do README de lá) e apontar "ar.glb"/"ar.usdz" para os arquivos.
-  5. Vídeo: "mp4" (arquivo em <pasta>/video/, até ~90 MB) ou "youtube" (id do vídeo); "orientacao": "vertical" | "horizontal".
+  5. Vídeo: "mp4" (arquivo em <pasta>/video/, até ~90 MB) ou "youtube" (id do vídeo); "orientacao": "vertical" | "horizontal"; "capitulos": [{ "t": 44, "titulo": "Prateleiras" }] (segundos).
   6. node tools/qr.mjs <pasta>  →  <pasta>/qr/ (QR em PNG/SVG + etiqueta de impressão em PDF/PNG).
+  7. Vistas: "galeria": [{ "src": "img/vista.webp", "legenda": "..." }] (toque amplia). Arte planificada: "medidas.planificado".
   Texto aceita **negrito**.
 -->
 <script type="application/json" id="projeto">
@@ -98,7 +99,7 @@
   ]
 }
 </script>
-<script type="module" src="../assets/produto.js?v=3"></script>
+<script type="module" src="../assets/produto.js?v=5"></script>
 </head>
 <body>
 <div id="app"></div>

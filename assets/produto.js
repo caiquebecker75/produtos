@@ -60,6 +60,29 @@ function objetivo() {
   </section>`;
 }
 
+function galeria() {
+  const g = P.galeria || [];
+  if (!g.length) return '';
+  blocos.push(['vistas', 'Vistas']);
+  return `
+  <section class="sec vistas" id="vistas">
+    <div class="wrap">
+      <div class="eyebrow">Conheça a peça</div>
+      <h2 class="h2">Vistas <b>do display</b></h2>
+      <p class="lead">Toque na imagem para ampliar.</p>
+      <div class="galeria">
+        ${g.map((it, i) => `
+        <figure>
+          <button type="button" class="gal-item" data-gal="${i}" aria-label="Ampliar: ${esc(it.legenda || P.nome)}">
+            <img src="${esc(it.src)}" alt="${esc(it.legenda || P.nome)}" loading="lazy">
+          </button>
+          ${it.legenda ? `<figcaption>${esc(it.legenda)}</figcaption>` : ''}
+        </figure>`).join('')}
+      </div>
+    </div>
+  </section>`;
+}
+
 function montagem() {
   const passos = P.montagem || [];
   if (!passos.length) return '';
@@ -108,6 +131,7 @@ function video() {
           <h2 class="h2">Veja <b>passo a passo</b></h2>
           <p class="lead">${md(v.texto || 'Assista antes de abrir a embalagem: a montagem fica mais rápida e sem retrabalho.')}</p>
           ${v.duracao ? `<p class="dur">Duração ${esc(v.duracao)}</p>` : ''}
+          ${v.capitulos?.length && v.mp4 ? `<ol class="capitulos">${v.capitulos.map((c) => `<li><button type="button" data-t="${Number(c.t) || 0}"><span>${Math.floor(c.t / 60)}:${String(Math.floor(c.t % 60)).padStart(2, '0')}</span>${esc(c.titulo)}</button></li>`).join('')}</ol>` : ''}
         </div>
       </div>
     </div>
@@ -183,6 +207,7 @@ function medidas() {
       <h2 class="h2">Medidas <b>e ficha técnica</b></h2>
       <div class="med-grid">
         ${m.desenho ? `<figure class="desenho"><img src="${esc(m.desenho)}" alt="Desenho técnico com as medidas" loading="lazy">${m.legenda ? `<figcaption>${esc(m.legenda)}</figcaption>` : ''}</figure>` : ''}
+        ${m.planificado ? `<figure class="desenho planificado"><button type="button" class="gal-item" data-zoom="${esc(m.planificado)}" aria-label="Ampliar a arte planificada"><img src="${esc(m.planificado)}" alt="Arte planificada da peça" loading="lazy"></button><figcaption>${esc(m.legendaPlanificado || 'Arte planificada: toque para ampliar')}</figcaption></figure>` : ''}
         <div>
           ${big ? `<div class="big-dims">${big}</div>` : ''}
           <div class="ficha">${grupos}</div>
@@ -256,7 +281,7 @@ function rodape() {
 }
 
 // ---------------------------------------------------------------- montagem da página
-const corpo = [capa(), objetivo(), montagem(), video(), ar(), medidas(), checklist(), faq()].join('');
+const corpo = [capa(), objetivo(), galeria(), montagem(), video(), ar(), medidas(), checklist(), faq()].join('');
 // senha de acesso antes de mostrar qualquer conteúdo (e antes do questionário do QR)
 const senhaHash = await exigirSenha(P);
 $('#app').innerHTML = `
@@ -378,6 +403,71 @@ blocos.forEach(([id]) => io.observe(document.getElementById(id)));
   $('#copiar')?.addEventListener('click', async () => {
     try { await navigator.clipboard.writeText(pageUrl); toast('Link copiado. Cole no Safari ou no Chrome.'); }
     catch { window.prompt('Copie o link:', pageUrl); }
+  });
+})();
+
+// ---------------------------------------------------------------- capítulos do vídeo
+(function () {
+  const player = $('#video video');
+  if (!player) return;
+  const botoes = [...document.querySelectorAll('.capitulos button')];
+  botoes.forEach((b) => b.addEventListener('click', () => {
+    player.currentTime = Number(b.dataset.t);
+    player.play().catch(() => {});
+    player.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }));
+  player.addEventListener('timeupdate', () => {
+    let ativo = -1;
+    botoes.forEach((b, i) => { if (player.currentTime >= Number(b.dataset.t)) ativo = i; });
+    botoes.forEach((b, i) => b.classList.toggle('on', i === ativo));
+  });
+})();
+
+// ---------------------------------------------------------------- ampliar imagens (galeria e planificado)
+(function () {
+  const itens = (P.galeria || []).map((it) => ({ src: it.src, legenda: it.legenda || '' }));
+  let atual = 0;
+  let tela = null;
+  const fechar = () => { tela?.remove(); tela = null; document.body.style.overflow = ''; };
+  function mostrar(lista, i) {
+    atual = (i + lista.length) % lista.length;
+    const it = lista[atual];
+    if (!tela) {
+      tela = document.createElement('div');
+      tela.className = 'zoom';
+      tela.setAttribute('role', 'dialog');
+      tela.setAttribute('aria-modal', 'true');
+      document.body.appendChild(tela);
+      document.body.style.overflow = 'hidden';
+    }
+    tela.innerHTML = `
+      <button type="button" class="zoom-fechar" aria-label="Fechar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+      <figure><img src="${esc(it.src)}" alt="${esc(it.legenda)}">${it.legenda ? `<figcaption>${esc(it.legenda)}</figcaption>` : ''}</figure>
+      ${lista.length > 1 ? `<button type="button" class="zoom-nav ant" aria-label="Anterior">‹</button><button type="button" class="zoom-nav prox" aria-label="Próxima">›</button><div class="zoom-conta">${atual + 1}/${lista.length}</div>` : ''}`;
+    tela.querySelector('.zoom-fechar').onclick = fechar;
+    tela.querySelector('.ant')?.addEventListener('click', () => mostrar(lista, atual - 1));
+    tela.querySelector('.prox')?.addEventListener('click', () => mostrar(lista, atual + 1));
+    let x0 = null;
+    tela.ontouchstart = (e) => { x0 = e.touches[0].clientX; };
+    tela.ontouchend = (e) => {
+      if (x0 == null || lista.length < 2) return;
+      const dx = e.changedTouches[0].clientX - x0;
+      if (Math.abs(dx) > 50) mostrar(lista, atual + (dx < 0 ? 1 : -1));
+      x0 = null;
+    };
+    tela._lista = lista;
+  }
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-gal],[data-zoom]');
+    if (!b) return;
+    if (b.dataset.zoom) mostrar([{ src: b.dataset.zoom, legenda: P.medidas?.legendaPlanificado || 'Arte planificada' }], 0);
+    else mostrar(itens, Number(b.dataset.gal));
+  });
+  document.addEventListener('keydown', (e) => {
+    if (!tela) return;
+    if (e.key === 'Escape') fechar();
+    if (e.key === 'ArrowRight') mostrar(tela._lista, atual + 1);
+    if (e.key === 'ArrowLeft') mostrar(tela._lista, atual - 1);
   });
 })();
 
