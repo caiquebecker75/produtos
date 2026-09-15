@@ -69,7 +69,7 @@ function galeria() {
     <div class="wrap">
       <div class="eyebrow">Conheça a peça</div>
       <h2 class="h2">Vistas <b>do display</b></h2>
-      <p class="lead">Toque na imagem para ampliar.</p>
+      <p class="lead">Toque na imagem para ampliar${(P.galeria || []).length > 1 ? '<span class="so-celular">. Arraste para o lado para ver as outras</span>' : ''}.</p>
       <div class="galeria">
         ${g.map((it, i) => `
         <figure>
