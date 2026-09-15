@@ -50,9 +50,9 @@ body { font-family: 'Lexend', sans-serif; color: #0E1110; background: #C0EE4E; d
 .top span { font-family: 'Anton', sans-serif; font-size: 7pt; letter-spacing: 1.4pt; text-transform: uppercase; }
 h1 { font-weight: 200; text-transform: uppercase; font-size: 22pt; line-height: .95; margin-top: 6mm; letter-spacing: -.3pt; }
 h1 b { font-weight: 600; display: block; }
-.qr { background: #fff; border-radius: 5mm; padding: 4mm; margin-top: 5mm; display: flex; gap: 4mm; align-items: center; }
-.qr svg { width: 44mm; height: 44mm; flex: none; }
-.qr ol { list-style: none; display: grid; gap: 2.4mm; font-size: 7.6pt; line-height: 1.25; }
+.qr { background: #fff; border-radius: 5mm; padding: 3mm 4mm 4mm; margin-top: 5mm; }
+.qr svg { width: 62mm; height: 62mm; display: block; margin: 0 auto; }
+.qr ol { list-style: none; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 3mm; font-size: 7pt; line-height: 1.25; margin-top: 2mm; }
 .qr li { display: flex; gap: 2mm; align-items: baseline; }
 .qr li i { font-style: normal; font-family: 'Anton', sans-serif; background: #0E1110; color: #C0EE4E; border-radius: 50%; width: 4.2mm; height: 4.2mm; flex: none; display: grid; place-items: center; font-size: 6.5pt; }
 .peca { margin-top: auto; background: #0E1110; color: #fff; border-radius: 5mm; padding: 4mm 5mm; }
@@ -64,8 +64,8 @@ h1 b { font-weight: 600; display: block; }
 <h1>Escaneie <b>antes de montar</b></h1>
 <div class="qr">${svg}<ol>
   <li><i>1</i><span>Registre a loja onde a peça vai ficar</span></li>
-  <li><i>2</i><span>Veja a peça no local em realidade aumentada</span></li>
-  <li><i>3</i><span>Siga o passo a passo e o checklist</span></li>
+  ${P.ar?.glb ? '<li><i>2</i><span>Veja a peça no local em realidade aumentada</span></li>' : ''}
+  <li><i>${P.ar?.glb ? 3 : 2}</i><span>Siga o passo a passo e o checklist</span></li>
 </ol></div>
 <div class="peca"><small>${esc(P.cliente)}</small><b>${esc(P.nome)} ${esc(P.linha || '')}</b><span>projetos.75lab.com.br/produtos/${esc(slug)}</span></div>
 </body></html>`;
