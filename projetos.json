@@ -1,5 +1,27 @@
 [
   {
+    "slug": "mars-displays-whiskas-pedigree",
+    "cliente": "Mars Petcare",
+    "nome": "Displays Whiskas & Pedigree",
+    "criado": "2026-09-15",
+    "cor": "#FF7A1A",
+    "sigla": "WP",
+    "pecas": [
+      {
+        "id": "automatico",
+        "nome": "Display Automático"
+      },
+      {
+        "id": "flash",
+        "nome": "Display Flash"
+      },
+      {
+        "id": "precificadores",
+        "nome": "Precificadores"
+      }
+    ]
+  },
+  {
     "slug": "savencia-enxoval-frescatino",
     "cliente": "Savencia Fromage & Dairy",
     "nome": "Enxoval Frescatino",
