@@ -4,6 +4,7 @@ Toda peça produzida pela 75 LAB sai com uma página de produto e um **QR code i
 
 - **Página:** objetivo da peça, montagem passo a passo, vídeo, realidade aumentada (tamanho real no chão da loja), medidas e ficha técnica, checklist e FAQ de execução.
 - **Senha de acesso:** cada página só abre com a senha definida no painel (card "Projetos e senhas"). Vale para o QR e para o link.
+- **No ar / fora do ar:** botão no painel. Fora do ar, o link e o QR mostram "Página fora do ar" (sem senha e sem conteúdo) e nenhum registro é aceito.
 - **QR code** (`?qr=1`): depois da senha, abre um mini questionário (nome, telefone, loja) e pega a **localização do aparelho** na hora.
 - **Painel interno** (`/painel/`): registros em tempo real, mapa, filtros por projeto e período, exportação para Excel, senha de cada página e etiqueta QR pronta para imprimir (`/painel/qr.html?p=<pasta>`). Só entra conta Google **@75lab.com.br**.
 
@@ -62,3 +63,9 @@ Texto aceita `**negrito**`. Campos: `slug`, `cliente`, `logoCliente`, `nome`, `l
   O registro de instalação também leva `senhaHash` e é recusado se a senha estiver errada ou tiver sido trocada.
 - O aparelho guarda o hash depois de acertar; ao trocar a senha no painel, todos precisam digitar a nova.
 - A senha protege o fluxo (quem registra e quem vê a página pelo QR), não o conteúdo: o texto da página está neste repositório público.
+
+## No ar / fora do ar
+
+- Documento público `paginas/{pasta}` (`ativo`, `atualizadoEm`, `atualizadoPor`): qualquer um lê um documento (a página precisa saber), só a equipe lista e grava. Sem documento = no ar.
+- As regras de `portas` e de `instalacoes` exigem a página no ar: fora do ar, nem a senha certa abre e nenhum registro entra.
+- É um bloqueio de acesso, não uma remoção: o HTML continua no GitHub Pages. Para apagar de vez, remova a pasta do repositório.
