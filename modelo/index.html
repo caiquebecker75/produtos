@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Página modelo · Produto 75 LAB</title>
+<meta name="description" content="Modelo da página de produto 75 LAB: objetivo, montagem, vídeo, realidade aumentada, medidas, checklist e FAQ.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#FFFFFF">
+<link rel="icon" href="../assets/img/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Lexend:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/produto.css?v=1">
+<script>(function(){var u=navigator.userAgent,m=/Android|iPhone|iPad|iPod/i.test(u)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);document.documentElement.classList.add(m?'is-mobile':'is-desktop')})()</script>
+<!--
+  COMO CRIAR UMA PÁGINA NOVA
+  1. node tools/novo-projeto.mjs <cliente-peca-linha>   (copia esta pasta e registra em projetos.json)
+  2. Troque o JSON abaixo. Bloco sem dados = bloco escondido (ex.: "video": null).
+  3. Imagens em <pasta>/img/ (render sem fundo em .webp, logo do cliente, desenho técnico).
+  4. 3D: publicar no repo "ar" (pipeline do README de lá) e apontar "ar.glb"/"ar.usdz" para os arquivos.
+  5. Vídeo: "mp4" (arquivo em <pasta>/video/, até ~90 MB) ou "youtube" (id do vídeo); "orientacao": "vertical" | "horizontal".
+  6. node tools/qr.mjs <pasta>  →  <pasta>/qr/ (QR em PNG/SVG + etiqueta de impressão em PDF/PNG).
+  Texto aceita **negrito**.
+-->
+<script type="application/json" id="projeto">
+{
+  "slug": "modelo",
+  "cliente": "Nome do cliente",
+  "logoCliente": null,
+  "nome": "Nome da peça",
+  "linha": "Marca ou linha",
+  "subtitulo": "Treinamento de montagem",
+  "tipo": "Tipo da peça e material principal (ex.: display de chão em MDF e acrílico)",
+  "imagem": "https://projetos.75lab.com.br/ar/famosa-display-maromba/poster.webp?v=3",
+  "tempoMontagem": "15 minutos",
+
+  "objetivo": {
+    "texto": "Uma frase que diga **para que a peça existe**: qual produto ela expõe, onde fica na loja e o que precisa acontecer com o shopper.",
+    "pontos": [
+      { "titulo": "Objetivo de negócio", "texto": "Ex.: levar a categoria para a área de circulação e **ganhar ponto extra**." },
+      { "titulo": "Onde instalar", "texto": "Ex.: corredor principal, ponta de gôndola ou perto do caixa." },
+      { "titulo": "Diferencial da execução", "texto": "Ex.: montagem sem ferramenta, abastecimento rápido." }
+    ]
+  },
+
+  "pecas": [
+    { "qtd": "1", "nome": "Peça principal" },
+    { "qtd": "2", "nome": "Peças laterais" },
+    { "qtd": "4", "nome": "Pés ou rodízios" }
+  ],
+  "ferramentas": "Diga se precisa de ferramenta. Ex.: não precisa de parafuso nem chave.",
+
+  "montagem": [
+    { "titulo": "Separe as peças", "texto": "Cada passo começa com um **verbo** e descreve uma ação só." },
+    { "titulo": "Monte a estrutura", "texto": "Diga onde encaixar e como saber que ficou certo.", "alerta": "Campo opcional para um cuidado importante neste passo." },
+    { "titulo": "Finalize", "texto": "Último ajuste antes de abastecer." }
+  ],
+
+  "video": {
+    "pendente": "Aqui entra o **vídeo de montagem** (MP4 ou YouTube, vertical ou horizontal).",
+    "orientacao": "horizontal",
+    "texto": "Assista antes de abrir a embalagem: a montagem fica mais rápida e sem retrabalho.",
+    "duracao": "2 min"
+  },
+
+  "ar": {
+    "glb": "https://projetos.75lab.com.br/ar/famosa-display-maromba/display.glb?v=2",
+    "usdz": "https://projetos.75lab.com.br/ar/famosa-display-maromba/display.usdz?v=2",
+    "poster": "https://projetos.75lab.com.br/ar/famosa-display-maromba/poster.webp?v=3"
+  },
+
+  "medidas": {
+    "desenho": null,
+    "legenda": "Medidas em milímetros",
+    "principais": [
+      { "rotulo": "Altura", "valor": "137", "unidade": "cm" },
+      { "rotulo": "Largura", "valor": "109", "unidade": "cm" },
+      { "rotulo": "Profundidade", "valor": "40", "unidade": "cm" }
+    ],
+    "grupos": [
+      { "titulo": "Descrição técnica", "texto": "Material, acabamento e para qual produto/embalagem a peça foi desenhada." },
+      { "titulo": "Abastecimento / planograma", "itens": [["Prateleiras", "4"], ["Produtos por prateleira", "12"], ["Peso com abastecimento", "25 kg"]] },
+      { "titulo": "Embalagem e armazenamento", "itens": [["Tamanho da caixa", "140 × 50 × 10 cm"], ["Peso bruto", "8 kg"], ["Empilhamento", "10 caixas"]] }
+    ]
+  },
+
+  "checklist": [
+    { "grupo": "Antes de montar", "itens": ["Conferi todas as peças da caixa", "Escolhi o local e testei em realidade aumentada"] },
+    { "grupo": "Montagem", "itens": ["Estrutura firme e nivelada", "Comunicação visível de frente para o fluxo"] },
+    { "grupo": "Abastecimento", "itens": ["Produtos conforme planograma", "Foto do ponto enviada ao responsável"] }
+  ],
+
+  "faq": [
+    { "p": "Uma pergunta real que o promotor faz?", "r": "Resposta curta e direta, em uma ou duas frases." },
+    { "p": "O que fazer se faltar uma peça?", "r": "Não improvise. Fale com a 75 LAB pelo telefone do rodapé." },
+    { "p": "Como limpar a peça?", "r": "Pano úmido. Evite produtos abrasivos." }
+  ]
+}
+</script>
+<script type="module" src="../assets/produto.js?v=1"></script>
+</head>
+<body>
+<div id="app"></div>
+</body>
+</html>

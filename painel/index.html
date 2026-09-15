@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Instalações 75 LAB · Painel</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0E1110">
+<link rel="icon" href="../assets/img/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Lexend:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="painel.css?v=1">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script defer src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+<script type="module" src="painel.js?v=1"></script>
+</head>
+<body>
+
+<!-- entrar -->
+<main id="tela-login" class="login" hidden>
+  <div class="login-card">
+    <img src="../assets/img/logo-75lab-preto.png" alt="75 LAB" class="login-logo" width="68" height="48">
+    <div class="eyebrow">Uso interno</div>
+    <h1>Painel de <b>instalações</b></h1>
+    <p>Quem escaneou o QR code das peças, em qual loja e onde. Acesso só para contas <b>@75lab.com.br</b>.</p>
+    <button id="entrar" class="btn-google" type="button">
+      <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.5 30.2 0 24 0 14.6 0 6.6 5.4 2.6 13.3l7.8 6.1C12.3 13.6 17.6 9.5 24 9.5z"/><path fill="#4285F4" d="M46.1 24.6c0-1.6-.1-3.1-.4-4.6H24v9.1h12.4c-.5 2.9-2.2 5.3-4.6 6.9l7.5 5.8c4.4-4.1 6.8-10.1 6.8-17.2z"/><path fill="#FBBC05" d="M10.4 28.6c-.5-1.4-.8-3-.8-4.6s.3-3.1.8-4.6l-7.8-6.1C.9 16.6 0 20.2 0 24s.9 7.4 2.6 10.7l7.8-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.5-5.8c-2.1 1.4-4.8 2.3-8.4 2.3-6.4 0-11.7-4.1-13.6-9.9l-7.8 6.1C6.6 42.6 14.6 48 24 48z"/></svg>
+      Entrar com Google
+    </button>
+    <p class="login-erro" id="login-erro" hidden></p>
+  </div>
+</main>
+
+<!-- carregando -->
+<div id="tela-carregando" class="carregando"><span></span></div>
+
+<!-- painel -->
+<div id="tela-painel" hidden>
+  <header class="barra">
+    <div class="barra-in">
+      <img src="../assets/img/logo-75lab-lime.png" alt="75 LAB" width="45" height="32">
+      <div class="barra-tit">Instalações</div>
+      <div class="barra-user"><span id="usuario"></span><button id="sair" type="button">Sair</button></div>
+    </div>
+  </header>
+
+  <main class="conteudo">
+    <section class="filtros" aria-label="Filtros">
+      <label><span>Projeto</span><select id="f-projeto"><option value="">Todos os projetos</option></select></label>
+      <label><span>Período</span>
+        <select id="f-periodo">
+          <option value="7">Últimos 7 dias</option>
+          <option value="30" selected>Últimos 30 dias</option>
+          <option value="90">Últimos 90 dias</option>
+          <option value="0">Tudo</option>
+        </select>
+      </label>
+      <label class="busca"><span>Buscar</span><input id="f-busca" type="search" placeholder="Loja, promotor ou telefone"></label>
+      <div class="acoes">
+        <button id="exportar" type="button" class="btn-lime">Baixar Excel</button>
+      </div>
+    </section>
+
+    <section class="kpis" aria-label="Resumo">
+      <div class="kpi escuro"><small>Registros</small><b id="k-total">0</b></div>
+      <div class="kpi"><small>Lojas</small><b id="k-lojas">0</b></div>
+      <div class="kpi"><small>Promotores</small><b id="k-pessoas">0</b></div>
+      <div class="kpi"><small>Com localização</small><b id="k-geo">0%</b></div>
+    </section>
+
+    <section class="grade">
+      <div class="card mapa-card">
+        <div class="card-top"><h2>Mapa</h2><span class="dica" id="mapa-dica"></span></div>
+        <div id="mapa"></div>
+      </div>
+      <div class="card">
+        <div class="card-top"><h2>Por projeto</h2></div>
+        <ul class="projetos" id="lista-projetos"></ul>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-top"><h2>Registros</h2><span class="dica" id="contagem"></span></div>
+      <div class="tabela-wrap">
+        <table class="tabela">
+          <thead><tr><th>Quando</th><th>Projeto</th><th>Loja</th><th>Promotor</th><th>Telefone</th><th>Localização</th><th>Origem</th><th></th></tr></thead>
+          <tbody id="linhas"></tbody>
+        </table>
+      </div>
+      <p class="vazio" id="vazio" hidden>Nenhum registro neste filtro ainda. Assim que alguém escanear o QR code de uma peça, aparece aqui na hora.</p>
+    </section>
+  </main>
+</div>
+<div class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>

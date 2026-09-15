@@ -1,0 +1,50 @@
+rules_version = '2';
+// Instalações 75 LAB
+// - Qualquer pessoa que escaneia o QR de uma página de produto pode CRIAR um registro de instalação.
+// - Só a equipe 75 LAB (login Google @75lab.com.br) lê, corrige ou apaga.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function equipe75() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email.lower().matches('.*@75lab[.]com[.]br$');
+    }
+
+    function texto(v, min, max) {
+      return v is string && v.size() >= min && v.size() <= max;
+    }
+
+    function geoValida(g) {
+      return g == null || (g is map
+        && g.keys().hasOnly(['lat', 'lng', 'precisao'])
+        && g.lat is number && g.lat >= -90 && g.lat <= 90
+        && g.lng is number && g.lng >= -180 && g.lng <= 180
+        && (!('precisao' in g) || g.precisao is number));
+    }
+
+    match /instalacoes/{id} {
+      allow create: if request.resource.data.keys().hasOnly([
+            'projeto', 'projetoNome', 'cliente', 'nome', 'telefone', 'loja',
+            'geo', 'geoStatus', 'origem', 'aparelho', 'criadoEm'])
+        && texto(request.resource.data.projeto, 2, 80)
+        && texto(request.resource.data.projetoNome, 0, 140)
+        && texto(request.resource.data.cliente, 0, 100)
+        && texto(request.resource.data.nome, 2, 80)
+        && texto(request.resource.data.telefone, 8, 20)
+        && texto(request.resource.data.loja, 2, 140)
+        && texto(request.resource.data.cidade, 0, 80)
+        && geoValida(request.resource.data.geo)
+        && texto(request.resource.data.geoStatus, 0, 20)
+        && texto(request.resource.data.origem, 0, 10)
+        && texto(request.resource.data.aparelho, 0, 200)
+        && request.resource.data.criadoEm == request.time;
+
+      allow read, update, delete: if equipe75();
+    }
+
+    match /{doc=**} {
+      allow read, write: if false;
+    }
+  }
+}
