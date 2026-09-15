@@ -88,7 +88,8 @@
     const p = lista.find((x) => x.slug === slug);
     if (!p) return;
     document.title = `Etiqueta QR · ${p.nome}`;
-    document.getElementById('titulo').innerHTML = `${p.nome.replace(/[<>&]/g, '')} <b>${(p.cliente || '').replace(/[<>&]/g, '')}</b>`;
+    const esc = (t) => String(t || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    document.getElementById('titulo').innerHTML = `${esc(p.nome)} <b>${esc(p.cliente)}</b>`;
   }).catch(() => {});
 </script>
 </body>
