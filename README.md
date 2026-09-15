@@ -96,3 +96,6 @@ Texto aceita `**negrito**`. Campos: `slug`, `cliente`, `logoCliente`, `nome`, `l
 - O registro grava `pecas: ["display", ...]`. No painel: filtro **Peça**, peças na tabela, no popup do mapa, no Excel e contagem por peça.
   Os nomes vêm de `projetos.json` → `"pecas": [{ "id", "nome" }]`.
 - AR com orientação de parede/gôndola: `ar.posicionamento: "wall"`.
+- **Desabilitar uma peça:** no painel, cada enxoval tem os chips "Peças na página"; clicar desabilita/habilita. Grava `paginas/{pasta}.pecasOff` (com `pecasOffEm`, `pecasOffPor`, merge).
+  A peça some da janela de escolha e da página (com uma só peça habilitada a página abre direto nela), e as regras (`temPecaDesligada`) recusam registro novo com ela.
+  Registros antigos continuam no painel. O painel não deixa desabilitar a última peça: para bloquear tudo, "Tirar do ar".
