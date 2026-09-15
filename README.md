@@ -3,8 +3,9 @@
 Toda peça produzida pela 75 LAB sai com uma página de produto e um **QR code impresso** que vai junto na embalagem.
 
 - **Página:** objetivo da peça, montagem passo a passo, vídeo, realidade aumentada (tamanho real no chão da loja), medidas e ficha técnica, checklist e FAQ de execução.
-- **QR code** (`?qr=1`): abre um mini questionário (nome, telefone, loja) e pega a **localização do aparelho** na hora.
-- **Painel interno** (`/painel/`): registros em tempo real, mapa, filtros por projeto e período, exportação para Excel. Só entra conta Google **@75lab.com.br**.
+- **Senha de acesso:** cada página só abre com a senha definida no painel (card "Projetos e senhas"). Vale para o QR e para o link.
+- **QR code** (`?qr=1`): depois da senha, abre um mini questionário (nome, telefone, loja) e pega a **localização do aparelho** na hora.
+- **Painel interno** (`/painel/`): registros em tempo real, mapa, filtros por projeto e período, exportação para Excel, senha de cada página e etiqueta QR pronta para imprimir (`/painel/qr.html?p=<pasta>`). Só entra conta Google **@75lab.com.br**.
 
 Publicado no GitHub Pages: `https://projetos.75lab.com.br/produtos/<pasta>/` · painel em `https://projetos.75lab.com.br/produtos/painel/`
 
@@ -52,3 +53,12 @@ Texto aceita `**negrito**`. Campos: `slug`, `cliente`, `logoCliente`, `nome`, `l
 - A localização depende da permissão do navegador (o celular pergunta uma vez). Se o promotor negar, o registro vai sem ponto e o painel mostra "Bloqueada".
 - Domínio novo para o painel? Adicionar em Firebase → Authentication → Configurações → Domínios autorizados.
 - `projetos.json` lista as páginas no painel (inclusive as que ainda não têm registro). O `novo-projeto.mjs` já atualiza.
+
+## Senha de acesso
+
+- Documento `senhas/{pasta}` (`senha`, `hash`, `atualizadoEm`, `atualizadoPor`), só a equipe lê e grava. Página nova começa **bloqueada** até alguém criar a senha no painel.
+- `hash` = SHA-256 de `<pasta>:<senha em minúsculas, sem espaços nas pontas>` (`assets/senha.js`).
+- A página confere lendo `portas/{pasta}/chaves/{hash}`: a regra só deixa ler com o hash certo, então a senha nunca vai para o navegador.
+  O registro de instalação também leva `senhaHash` e é recusado se a senha estiver errada ou tiver sido trocada.
+- O aparelho guarda o hash depois de acertar; ao trocar a senha no painel, todos precisam digitar a nova.
+- A senha protege o fluxo (quem registra e quem vê a página pelo QR), não o conteúdo: o texto da página está neste repositório público.
