@@ -1,5 +1,63 @@
 [
   {
+    "slug": "agricola-famosa-mpdv-melao",
+    "cliente": "Agrícola Famosa",
+    "nome": "MPDV Melão Famosa",
+    "cor": "#D6336C",
+    "sigla": "MM",
+    "criado": "2026-09-15",
+    "pecas": [
+      {
+        "id": "polionda-p",
+        "nome": "Display Polionda P"
+      },
+      {
+        "id": "polionda-m",
+        "nome": "Display Polionda M"
+      },
+      {
+        "id": "maromba-p",
+        "nome": "Display Maromba P"
+      },
+      {
+        "id": "maromba-m",
+        "nome": "Display Maromba M"
+      },
+      {
+        "id": "carenagem",
+        "nome": "Carenagem de pallet"
+      },
+      {
+        "id": "portal",
+        "nome": "Portal"
+      },
+      {
+        "id": "arco",
+        "nome": "Testeira Arco"
+      },
+      {
+        "id": "inflavel-melao",
+        "nome": "Inflável Melão"
+      },
+      {
+        "id": "inflavel-estrela",
+        "nome": "Inflável Estrela"
+      },
+      {
+        "id": "selo-fruta",
+        "nome": "Selo de fruta"
+      },
+      {
+        "id": "fiorino",
+        "nome": "Envelopamento Fiorino"
+      },
+      {
+        "id": "ifpa",
+        "nome": "Expositor IFPA"
+      }
+    ]
+  },
+  {
     "slug": "mars-displays-whiskas-pedigree",
     "cliente": "Mars Petcare",
     "nome": "Displays Whiskas & Pedigree",
