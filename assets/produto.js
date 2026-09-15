@@ -5,7 +5,7 @@
 // Texto aceita **negrito**. Ver modelo/index.html para os campos.
 import { iniciarRegistro } from './registro.js?v=4';
 import { exigirSenha } from './acesso.js?v=2';
-import { escolherPecas } from './selecao.js?v=1';
+import { escolherPecas } from './selecao.js?v=2';
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];

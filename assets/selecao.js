@@ -19,12 +19,12 @@ export function escolherPecas(P, { inicial = [], cancelavel = false } = {}) {
         </div>
         ${P.logoCliente ? `<img class="porta-cliente" src="${esc(P.logoCliente)}" alt="${esc(P.cliente)}">` : `<div class="porta-eyebrow">${esc(P.cliente)}</div>`}
         <h1>Quais peças você vai <b>executar agora?</b></h1>
-        <p class="porta-txt">Marque só o que vai instalar <b>nesta loja</b>. As outras peças do ${esc(P.nome)} podem ir para outros pontos.</p>
+        <p class="porta-txt">Marque só o que vai instalar <b>nesta loja</b>. As outras peças podem ir para outras lojas.</p>
         <div class="sel-lista">
           ${P.kit.map((x) => `
           <label class="sel-item">
             <input type="checkbox" value="${esc(x.id)}"${marcadas.has(x.id) ? ' checked' : ''}>
-            <span class="sel-img">${x.miniatura || x.imagem ? `<img src="${esc(x.miniatura || x.imagem)}" alt="" loading="lazy">` : ''}</span>
+            <span class="sel-img">${x.miniatura || x.imagem ? `<img src="${esc(x.miniatura || x.imagem)}" alt="" decoding="async">` : ''}</span>
             <span class="sel-txt"><b>${esc(x.nome)}</b>${x.resumo ? `<small>${esc(x.resumo)}</small>` : ''}</span>
             <span class="sel-check">${CHECK}</span>
           </label>`).join('')}
