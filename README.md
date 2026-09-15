@@ -14,6 +14,7 @@ Publicado no GitHub Pages: `https://projetos.75lab.com.br/produtos/<pasta>/` · 
 |---|---|
 | `modelo/` | Página modelo com todos os blocos (use para testar o registro) |
 | `savencia-display-pp-polenguinho/` | Savencia · Display PP Polenguinho |
+| `savencia-enxoval-frescatino/` | Savencia · Enxoval Frescatino (5 peças: display, wobbler, gravitacional, frame, clipstrip) |
 
 ## Criar a página de uma peça nova
 
@@ -74,3 +75,14 @@ Texto aceita `**negrito**`. Campos: `slug`, `cliente`, `logoCliente`, `nome`, `l
 - Documento público `paginas/{pasta}` (`ativo`, `atualizadoEm`, `atualizadoPor`): qualquer um lê um documento (a página precisa saber), só a equipe lista e grava. Sem documento = no ar.
 - As regras de `portas` e de `instalacoes` exigem a página no ar: fora do ar, nem a senha certa abre e nenhum registro entra.
 - É um bloqueio de acesso, não uma remoção: o HTML continua no GitHub Pages. Para apagar de vez, remova a pasta do repositório.
+
+## Enxoval (várias peças numa página)
+
+- No JSON, `"kit": [{ "id", "nome", "nomeCurto", "resumo", "miniatura", "imagem", ...blocos da peça }]`. Cada peça aceita os
+  mesmos blocos de uma página simples (`galeria`, `montagem`, `caixa` (o que vem na caixa), `video`, `ar`, `medidas`, `checklist`, `faq`).
+  O `objetivo` e o `faq` da raiz valem para o enxoval inteiro.
+- Fluxo: senha → janela **"Quais peças você vai executar agora?"** (`assets/selecao.js`) → questionário (mostra as peças) → página só com as peças escolhidas.
+  "Trocar peças" no topo refaz a escolha sem recarregar. `?pecas=display,wobbler` no link abre direto com essas peças (o QR do enxoval sempre pergunta).
+- O registro grava `pecas: ["display", ...]`. No painel: filtro **Peça**, peças na tabela, no popup do mapa, no Excel e contagem por peça.
+  Os nomes vêm de `projetos.json` → `"pecas": [{ "id", "nome" }]`.
+- AR com orientação de parede/gôndola: `ar.posicionamento: "wall"`.
