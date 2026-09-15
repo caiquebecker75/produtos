@@ -42,7 +42,12 @@ Texto aceita `**negrito**`. Campos: `slug`, `cliente`, `logoCliente`, `nome`, `l
 
 - **3D / AR:** o modelo vai para o repositório [`caiquebecker75/ar`](https://github.com/caiquebecker75/ar) pelo pipeline de lá
   (GLB para Android, USDZ para iPhone, escala travada em tamanho real). Aqui só se aponta `ar.glb` e `ar.usdz` para os arquivos publicados.
-- **Vídeo:** MP4 em `<pasta>/video/` (até ~90 MB; acima disso use YouTube não listado com `"youtube": "<id>"`).
+- **Vídeo:** MP4 em `<pasta>/video/` (o GitHub recusa arquivo acima de 100 MB). Comprimir mantendo 1080p:
+  `swift tools/video-comprimir.swift entrada.mp4 <pasta>/video/montagem.mp4 1700` (kbps; 3 min ≈ 40 MB).
+  Não use os presets do `avconvert`: o de 720p saiu com 7 Mbps, maior que o original.
+- **Capítulos do vídeo:** `swift tools/video-legendas.swift video.mp4` lê as legendas gravadas no vídeo (OCR do macOS)
+  com a minutagem; serve para montar `video.capitulos` e conferir o passo a passo com o que é falado.
+- **Vistas e planificado:** `galeria` (renders com fundo transparente, em WebP) e `medidas.planificado` (arte aberta).
 
 ## Registro de instalação e painel
 
