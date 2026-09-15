@@ -6,7 +6,8 @@ Toda peça produzida pela 75 LAB sai com uma página de produto e um **QR code i
 - **Senha de acesso:** cada página só abre com a senha definida no painel (card "Projetos e senhas"). Vale para o QR e para o link.
 - **Acesso livre:** botão "Liberar sem senha" no painel, por página. A página abre direto e o registro entra sem senha; "Exigir senha" volta a pedir a senha guardada.
 - **No ar / fora do ar:** botão no painel. Fora do ar, o link e o QR mostram "Página fora do ar" (sem senha e sem conteúdo) e nenhum registro é aceito.
-- **QR code** (`?qr=1`): depois da senha, abre um mini questionário (nome, telefone, loja) e pega a **localização do aparelho** na hora.
+- **Registro obrigatório:** pelo QR ou pelo link, depois da senha (e da escolha de peças) a página só abre depois do mini questionário (nome, telefone, loja) com a **localização do aparelho**. A tela não tem X.
+  Pula só se o aparelho já registrou as mesmas peças nas últimas 12 h. Sem internet na loja, aparece a opção de ver a montagem e registrar quando o sinal voltar. `?qr=1` só marca a origem "QR code" no painel.
 - **Painel interno** (`/painel/`): registros em tempo real, mapa, filtros por projeto e período, exportação para Excel, senha de cada página e etiqueta QR pronta para imprimir (`/painel/qr.html?p=<pasta>`). Só entra conta Google **@75lab.com.br**.
 
 Publicado no GitHub Pages: `https://projetos.75lab.com.br/produtos/<pasta>/` · painel em `https://projetos.75lab.com.br/produtos/painel/`
