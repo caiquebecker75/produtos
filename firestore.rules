@@ -71,7 +71,7 @@ service cloud.firestore {
     match /instalacoes/{id} {
       allow create: if request.resource.data.keys().hasOnly([
             'projeto', 'projetoNome', 'cliente', 'nome', 'telefone', 'loja',
-            'geo', 'geoStatus', 'origem', 'aparelho', 'senhaHash', 'criadoEm'])
+            'geo', 'geoStatus', 'origem', 'aparelho', 'senhaHash', 'pecas', 'criadoEm'])
         && slugValido(request.resource.data.projeto)
         && texto(request.resource.data.projetoNome, 0, 140)
         && texto(request.resource.data.cliente, 0, 100)
@@ -82,6 +82,8 @@ service cloud.firestore {
         && texto(request.resource.data.geoStatus, 0, 20)
         && texto(request.resource.data.origem, 0, 10)
         && texto(request.resource.data.aparelho, 0, 200)
+        // enxoval: peças executadas nesta instalação (páginas de uma peça só não mandam)
+        && (!('pecas' in request.resource.data) || (request.resource.data.pecas is list && request.resource.data.pecas.size() <= 20))
         && request.resource.data.criadoEm == request.time
         && paginaNoAr(request.resource.data.projeto)
         && senhaConfere(request.resource.data.projeto, request.resource.data.senhaHash);

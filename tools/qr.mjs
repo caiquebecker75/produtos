@@ -63,8 +63,10 @@ h1 b { font-weight: 600; display: block; }
 <div class="top"><img src="${logo('logo-75lab-preto.png')}" alt="75 LAB"><span>Ideia boa é a que acontece</span></div>
 <h1>Escaneie <b>antes de montar</b></h1>
 <div class="qr">${svg}<ol>
-  ${['Digite a senha de acesso passada pelo responsável', 'Registre a loja onde a peça vai ficar',
-      ...(P.ar?.glb ? ['Veja a peça no local em realidade aumentada'] : []), 'Siga o passo a passo e o checklist']
+  ${(P.kit?.length
+      ? ['Digite a senha de acesso passada pelo responsável', 'Escolha as peças que vai instalar nesta loja', 'Registre a loja onde as peças vão ficar', 'Siga a montagem de cada peça e o checklist']
+      : ['Digite a senha de acesso passada pelo responsável', 'Registre a loja onde a peça vai ficar',
+      ...(P.ar?.glb ? ['Veja a peça no local em realidade aumentada'] : []), 'Siga o passo a passo e o checklist'])
     .map((t, i) => `<li><i>${i + 1}</i><span>${t}</span></li>`).join('')}
 </ol></div>
 <div class="peca"><small>${esc(P.cliente)}</small><b>${esc(P.nome)} ${esc(P.linha || '')}</b><span>projetos.75lab.com.br/produtos/${esc(slug)}</span></div>

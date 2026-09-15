@@ -1,6 +1,6 @@
 // Registro de instalação: abre ao escanear o QR code (?qr=1) ou pelo botão "Registrar instalação".
 // Pede nome, telefone e loja, pega a localização do aparelho e grava em Firestore/instalacoes,
-// que só a equipe 75 LAB lê no painel (/painel/).
+// que só a equipe 75 LAB lê no painel (/painel/). No enxoval, grava também as peças executadas.
 import { db } from './base.js?v=1';
 import { chaveAcesso } from './acesso.js?v=2';
 
@@ -62,23 +62,29 @@ function mascara(d) {
   return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
 }
 
-export function iniciarRegistro(P, { toast, ICON, senhaHash }) {
+const mesmaLista = (a = [], b = []) => a.length === b.length && [...a].sort().join('|') === [...b].sort().join('|');
+
+export function iniciarRegistro(P, { toast, ICON, senhaHash, pecas = () => [], nomesPecas = () => [], trocarPecas = null }) {
   const params = new URLSearchParams(location.search);
   const veioDoQR = params.has('qr');
   const chaveReg = `reg75:${P.slug}`;
-  const btn = $('#btn-reg');
+  const botao = () => $('#btn-reg');
 
-  const marcarRegistrado = (loja) => {
-    btn.classList.add('ok');
-    btn.querySelector('span').textContent = 'Instalação registrada';
-    btn.title = loja ? `Registrada em ${loja}. Toque para registrar outra loja.` : '';
-    $('.faixa-reg')?.remove();
-  };
-  const ultimo = ler(chaveReg);
-  if (ultimo && Date.now() - ultimo.quando < 12 * 3600e3) marcarRegistrado(ultimo.loja);
+  // botão do topo: "registrada" só se este aparelho já registrou estas mesmas peças nas últimas 12 h
+  function atualizarBotao() {
+    const b = botao();
+    if (!b) return;
+    const ultimo = ler(chaveReg);
+    const ok = ultimo && Date.now() - ultimo.quando < 12 * 3600e3 && mesmaLista(ultimo.pecas || [], pecas());
+    b.classList.toggle('ok', Boolean(ok));
+    b.querySelector('span').textContent = ok ? 'Instalação registrada' : 'Registrar instalação';
+    b.title = ok && ultimo.loja ? `Registrada em ${ultimo.loja}. Toque para registrar outra loja.` : '';
+    if (ok) $('.faixa-reg')?.remove();
+  }
+  atualizarBotao();
 
   function faixa() {
-    if ($('.faixa-reg') || btn.classList.contains('ok')) return;
+    if ($('.faixa-reg') || botao()?.classList.contains('ok')) return;
     const f = document.createElement('div');
     f.className = 'faixa-reg';
     f.innerHTML = '<span>Instalação ainda não registrada.</span><button type="button">Registrar</button>';
@@ -91,14 +97,16 @@ export function iniciarRegistro(P, { toast, ICON, senhaHash }) {
     db(); // já vai baixando o Firebase
     if (geo.estado === 'parado' || geo.estado === 'tempo' || geo.estado === 'erro') pedirLocalizacao();
     const pessoa = ler('reg75:pessoa') || {};
+    const nomes = nomesPecas();
     const bg = document.createElement('div');
     bg.className = 'sheet-bg';
     bg.innerHTML = `
       <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="reg-titulo">
         <div class="sheet-top"><span class="tag">Registro de instalação</span><button class="fechar" type="button" aria-label="Fechar">${X}</button></div>
         <form id="reg-form" novalidate>
-          <h2 id="reg-titulo">Onde a peça <b>está sendo instalada?</b></h2>
+          <h2 id="reg-titulo">Onde ${nomes.length > 1 ? 'as peças' : 'a peça'} <b>${nomes.length > 1 ? 'estão sendo instaladas?' : 'está sendo instalada?'}</b></h2>
           <p class="peca">${esc(P.cliente)} · ${esc(P.nome)} ${esc(P.linha || '')}</p>
+          ${nomes.length ? `<div class="reg-pecas"><span>Peças: <b>${esc(nomes.join(', '))}</b></span>${trocarPecas ? '<button type="button" class="link-btn" data-reg-trocar>Trocar</button>' : ''}</div>` : ''}
           <label class="campo"><span>Seu nome</span><input name="nome" autocomplete="name" required minlength="2" maxlength="80" value="${esc(pessoa.nome || '')}" placeholder="Nome e sobrenome"></label>
           <label class="campo"><span>Telefone (WhatsApp)</span><input name="telefone" type="tel" inputmode="tel" autocomplete="tel-national" required value="${esc(mascara(soDigitos(pessoa.telefone || '')))}" placeholder="(11) 91234-5678"></label>
           <label class="campo"><span>Loja onde está instalando</span><input name="loja" autocomplete="organization" required minlength="2" maxlength="140" placeholder="Rede e unidade. Ex.: Carrefour Pinheiros"></label>
@@ -121,6 +129,12 @@ export function iniciarRegistro(P, { toast, ICON, senhaHash }) {
       if (veioDoQR) faixa();
     };
     $('.fechar', bg).addEventListener('click', fechar); // só fecha no X (clicar fora não perde o que foi digitado)
+    $('[data-reg-trocar]', bg)?.addEventListener('click', async () => {
+      bg.remove();
+      document.body.style.overflow = '';
+      await trocarPecas();
+      abrir();
+    });
     setTimeout(() => (pessoa.nome ? form.loja : form.nome).focus({ preventScroll: true }), 350);
 
     form.addEventListener('submit', async (ev) => {
@@ -145,6 +159,7 @@ export function iniciarRegistro(P, { toast, ICON, senhaHash }) {
       await aguardarGeo(8000);
       enviar.textContent = 'Enviando…';
       gravar('reg75:pessoa', { nome, telefone });
+      const lista = pecas();
       try {
         const { fs, db: base } = await db();
         await fs.addDoc(fs.collection(base, 'instalacoes'), {
@@ -159,12 +174,16 @@ export function iniciarRegistro(P, { toast, ICON, senhaHash }) {
           origem: veioDoQR ? 'qr' : 'link',
           aparelho: navigator.userAgent.slice(0, 200),
           senhaHash,
+          ...(lista.length ? { pecas: lista } : {}),
           criadoEm: fs.serverTimestamp(),
         });
-        gravar('reg75:pessoa', { nome, telefone });
-        gravar(chaveReg, { loja, quando: Date.now() });
-        if (veioDoQR) history.replaceState(null, '', location.pathname + location.hash);
-        marcarRegistrado(loja);
+        gravar(chaveReg, { loja, quando: Date.now(), pecas: lista });
+        if (veioDoQR) {
+          const u = new URL(location.href);
+          u.searchParams.delete('qr');
+          history.replaceState(null, '', u.pathname + u.search + u.hash);
+        }
+        atualizarBotao();
         $('.sheet', bg).innerHTML = `
           <div class="sucesso">
             <div class="ok">${ICON.check}</div>
@@ -175,7 +194,7 @@ export function iniciarRegistro(P, { toast, ICON, senhaHash }) {
         $('.sucesso .enviar', bg).addEventListener('click', () => {
           bg.remove();
           document.body.style.overflow = '';
-          document.getElementById('montagem')?.scrollIntoView();
+          document.querySelector('.peca-cap, [id$="montagem"]')?.scrollIntoView();
         });
       } catch (e) {
         console.error(e);
@@ -198,13 +217,15 @@ export function iniciarRegistro(P, { toast, ICON, senhaHash }) {
     });
   }
 
-  btn.addEventListener('click', abrir);
+  document.addEventListener('click', (e) => { if (e.target.closest('#btn-reg')) abrir(); });
   if (veioDoQR) {
-    if (ultimo && Date.now() - ultimo.quando < 2 * 3600e3) {
-      toast(`Você já registrou esta peça em ${ultimo.loja}. Para outra loja, toque em Registrar instalação.`);
+    const ultimo = ler(chaveReg);
+    if (ultimo && Date.now() - ultimo.quando < 2 * 3600e3 && mesmaLista(ultimo.pecas || [], pecas())) {
+      toast(`Você já registrou ${pecas().length > 1 ? 'estas peças' : 'esta peça'} em ${ultimo.loja}. Para outra loja, toque em Registrar instalação.`);
     } else {
       pedirLocalizacao();
       abrir();
     }
   }
+  return { abrir, atualizarBotao };
 }

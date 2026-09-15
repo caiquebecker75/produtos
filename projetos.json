@@ -1,5 +1,35 @@
 [
   {
+    "slug": "savencia-enxoval-frescatino",
+    "cliente": "Savencia Fromage & Dairy",
+    "nome": "Enxoval Frescatino",
+    "criado": "2026-09-15",
+    "cor": "#00837D",
+    "sigla": "FR",
+    "pecas": [
+      {
+        "id": "display",
+        "nome": "Display PP"
+      },
+      {
+        "id": "wobbler",
+        "nome": "Wobbler"
+      },
+      {
+        "id": "gravitacional",
+        "nome": "Gravitacional"
+      },
+      {
+        "id": "frame",
+        "nome": "Frame"
+      },
+      {
+        "id": "clipstrip",
+        "nome": "Clipstrip"
+      }
+    ]
+  },
+  {
     "slug": "savencia-display-pp-polenguinho",
     "cliente": "Savencia Fromage & Dairy",
     "nome": "Display PP Polenguinho",

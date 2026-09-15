@@ -113,6 +113,25 @@ function nomeProjeto(slug) {
   return { nome: c?.nome || r?.projetoNome || slug, cliente: c?.cliente || r?.cliente || '' };
 }
 
+// enxoval: nomes das peças executadas num registro (catálogo em projetos.json → "pecas")
+function nomesPecas(r) {
+  if (!Array.isArray(r.pecas) || !r.pecas.length) return [];
+  const c = catalogo.find((p) => p.slug === r.projeto);
+  return r.pecas.map((id) => c?.pecas?.find((x) => x.id === id)?.nome || id);
+}
+
+function preencherPecas() {
+  const sel = $('#f-peca');
+  const proj = $('#f-projeto').value;
+  const atual = sel.value;
+  const kits = catalogo.filter((p) => p.pecas?.length && (!proj || p.slug === proj));
+  const ops = [];
+  kits.forEach((k) => k.pecas.forEach((pc) => ops.push([`${k.slug}:${pc.id}`, kits.length > 1 ? `${pc.nome} · ${k.nome}` : pc.nome])));
+  sel.closest('label').hidden = !ops.length;
+  sel.innerHTML = '<option value="">Todas as peças</option>' + ops.map(([v, n]) => `<option value="${esc(v)}">${esc(n)}</option>`).join('');
+  sel.value = ops.some(([v]) => v === atual) ? atual : '';
+}
+
 function preencherProjetos() {
   const sel = $('#f-projeto');
   const atual = sel.value;
@@ -132,6 +151,11 @@ function filtrados({ ignorarProjeto = false } = {}) {
   const desde = dias ? Date.now() - dias * 864e5 : 0;
   return registros.filter((r) => {
     if (!ignorarProjeto && proj && r.projeto !== proj) return false;
+    const pc = $('#f-peca').value;
+    if (!ignorarProjeto && pc) {
+      const [ps, id] = pc.split(':');
+      if (r.projeto !== ps || !(r.pecas || []).includes(id)) return false;
+    }
     if (desde && r.data && r.data.getTime() < desde) return false;
     if (busca) {
       const alvo = `${r.loja} ${r.nome} ${r.telefone} ${r.projetoNome} ${r.cliente}`.toLowerCase();
@@ -143,6 +167,7 @@ function filtrados({ ignorarProjeto = false } = {}) {
 
 // ---------------------------------------------------------------- desenho
 function desenhar() {
+  preencherPecas();
   const lista = filtrados();
   const norm = (s) => String(s || '').trim().toLowerCase();
   $('#k-total').textContent = lista.length.toLocaleString('pt-BR');
@@ -161,7 +186,7 @@ function desenhar() {
     const wa = r.telefone ? `https://wa.me/55${r.telefone}` : '';
     return `<tr>
       <td>${dataFmt(r.data)}</td>
-      <td>${esc(p.nome)}<small>${esc(p.cliente)}</small></td>
+      <td>${esc(p.nome)}<small>${esc(p.cliente)}</small>${nomesPecas(r).length ? `<small class="pecas">${esc(nomesPecas(r).join(' · '))}</small>` : ''}</td>
       <td><b>${esc(r.loja)}</b></td>
       <td>${esc(r.nome)}</td>
       <td>${wa ? `<a href="${wa}" target="_blank" rel="noopener">${esc(telFmt(r.telefone))}</a>` : ''}</td>
@@ -185,6 +210,13 @@ function desenhar() {
       <span class="pn">${htmlMarcador(estiloProjeto(s, catalogo), 22)}${esc(p.nome)}</span><span class="pq">${n}</span>
       <span class="pc">${esc(p.cliente)}</span>
       <span class="pbar"><i style="width:${(n / max) * 100}%"></i></span>
+      ${(() => {
+        const kit = catalogo.find((c) => c.slug === s)?.pecas;
+        if (!kit?.length) return '';
+        const cp = {};
+        base.filter((r) => r.projeto === s).forEach((r) => (r.pecas || []).forEach((id) => { cp[id] = (cp[id] || 0) + 1; }));
+        return `<span class="ppecas">${kit.map((pc) => `${esc(pc.nome)} <b>${cp[pc.id] || 0}</b>`).join(' · ')}</span>`;
+      })()}
       <span class="plinks"><a href="#" data-filtrar="${esc(s)}">Filtrar</a><a href="${BASE_PAGINAS}${encodeURIComponent(s)}/" target="_blank" rel="noopener">Página</a><a href="qr.html?p=${encodeURIComponent(s)}" target="_blank" rel="noopener">Etiqueta QR</a></span>
       ${linhaStatus(s)}
       ${linhaSenha(s)}
@@ -209,7 +241,7 @@ function desenharMapa(lista) {
   }));
   comGeo.forEach((r) => {
     L.marker([r.geo.lat, r.geo.lng], { icon: icone(r.projeto), title: nomeProjeto(r.projeto).nome }).addTo(camada).bindPopup(
-      `<b>${esc(r.loja)}</b><br>${esc(nomeProjeto(r.projeto).nome)}<br>${esc(r.nome)} · ${esc(telFmt(r.telefone))}<br>${dataFmt(r.data)}`,
+      `<b>${esc(r.loja)}</b><br>${esc(nomeProjeto(r.projeto).nome)}${nomesPecas(r).length ? `<br>Peças: <b>${esc(nomesPecas(r).join(', '))}</b>` : ''}<br>${esc(r.nome)} · ${esc(telFmt(r.telefone))}<br>${dataFmt(r.data)}`,
     );
   });
   $('#mapa-dica').textContent = `${comGeo.length} ponto${comGeo.length === 1 ? '' : 's'} no mapa`;
@@ -226,7 +258,7 @@ function desenharMapa(lista) {
 }
 
 // ---------------------------------------------------------------- ações
-['#f-projeto', '#f-periodo'].forEach((s) => $(s).addEventListener('change', desenhar));
+['#f-projeto', '#f-peca', '#f-periodo'].forEach((s) => $(s).addEventListener('change', desenhar));
 $('#f-busca').addEventListener('input', desenhar);
 const filtrarProjeto = (e) => {
   const a = e.target.closest('[data-filtrar]');
@@ -254,6 +286,7 @@ $('#exportar').addEventListener('click', () => {
     'Hora': r.data ? r.data.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : '',
     'Cliente': nomeProjeto(r.projeto).cliente,
     'Projeto': nomeProjeto(r.projeto).nome,
+    'Peças': nomesPecas(r).join(', '),
     'Loja': r.loja,
     'Promotor': r.nome,
     'Telefone': telFmt(r.telefone),
