@@ -102,6 +102,8 @@ service cloud.firestore {
         && texto(request.resource.data.nome, 2, 80)
         && texto(request.resource.data.telefone, 8, 20)
         && texto(request.resource.data.loja, 2, 140)
+        // localização obrigatória (pedido de 15/09): registro sem ponto é recusado
+        && request.resource.data.geo is map
         && geoValida(request.resource.data.geo)
         && texto(request.resource.data.geoStatus, 0, 20)
         && texto(request.resource.data.origem, 0, 10)

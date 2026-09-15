@@ -311,7 +311,8 @@ section { position: relative; }
 }
 .campo input:focus { background: var(--lime-s); }
 .campo input[aria-invalid="true"] { background: #FBE3DF; }
-.geo { margin-top: 16px; display: flex; gap: 12px; align-items: center; background: var(--paper); border-radius: 14px; padding: 12px 14px; font-size: 13.5px; }
+.geo { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 10px 12px; align-items: center; background: var(--paper); border-radius: 14px; padding: 12px 14px; font-size: 13.5px; }
+.geo > span:nth-child(2) { flex: 1 1 190px; min-width: 0; }
 .geo .dot { width: 34px; height: 34px; border-radius: 50%; background: #fff; display: grid; place-items: center; flex: none; }
 .geo .dot svg { width: 18px; height: 18px; }
 .geo[data-estado="ok"] { background: var(--lime-s); }

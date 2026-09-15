@@ -40,13 +40,13 @@ function desenharGeo() {
   if (!el) return;
   el.dataset.estado = geo.estado;
   const txt = {
-    parado: 'Vamos registrar a localização da loja.',
+    parado: '<b>Localização obrigatória.</b> Quando o celular perguntar, toque em Permitir.',
     buscando: 'Pegando a localização da loja…',
     ok: `<b>Localização registrada</b>${geo.pos ? ` · precisão de ${geo.pos.precisao} m` : ''}`,
-    negado: '<b>Localização bloqueada.</b> Libere nas configurações do navegador para registrar onde a peça foi instalada.',
-    tempo: '<b>Sem sinal de GPS agora.</b> Tente de novo perto da entrada da loja.',
-    erro: '<b>Não deu para pegar a localização.</b> Tente de novo.',
-    indisponivel: 'Este aparelho não informa a localização.',
+    negado: '<b>Localização bloqueada, e ela é obrigatória.</b> iPhone: toque em <b>aA</b> na barra do Safari › Ajustes do Site › Localização › Permitir. Android: toque no cadeado ao lado do endereço › Permissões › Localização. Depois toque em Tentar de novo.',
+    tempo: '<b>Sem sinal de GPS agora.</b> Vá para perto da entrada da loja e tente de novo.',
+    erro: '<b>Não deu para pegar a localização.</b> Confira se a localização do celular está ligada e tente de novo.',
+    indisponivel: '<b>Este navegador não informa a localização.</b> Abra o link no Safari (iPhone) ou no Chrome (Android).',
   }[geo.estado];
   const tentar = ['negado', 'tempo', 'erro'].includes(geo.estado) ? '<button type="button" id="reg-geo-tentar">Tentar de novo</button>' : '';
   el.innerHTML = `<span class="dot">${PIN}</span><span>${txt}</span>${tentar}`;
@@ -168,8 +168,23 @@ export function iniciarRegistro(P, { toast, ICON, senhaHash, pecas = () => [], n
       erro.hidden = true;
       const enviar = $('.enviar', form);
       enviar.disabled = true;
-      enviar.textContent = geo.estado === 'buscando' ? 'Pegando localização…' : 'Enviando…';
-      await aguardarGeo(8000);
+      // localização obrigatória: sem ela o registro não sai (as regras também recusam)
+      if (geo.estado !== 'ok') {
+        if (geo.estado !== 'buscando') pedirLocalizacao();
+        enviar.textContent = 'Pegando localização…';
+        await aguardarGeo(25000);
+      }
+      if (geo.estado !== 'ok' || !geo.pos) {
+        erro.textContent = {
+          negado: 'A localização é obrigatória. Libere a localização para este site (veja como logo acima) e toque em Tentar de novo.',
+          indisponivel: 'A localização é obrigatória e este navegador não informa. Abra o link no Safari (iPhone) ou no Chrome (Android).',
+        }[geo.estado] || 'A localização é obrigatória e ainda não chegou. Vá para perto da entrada da loja e toque em Registrar de novo.';
+        erro.hidden = false;
+        enviar.disabled = false;
+        enviar.textContent = 'Registrar instalação';
+        $('#reg-geo', bg)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return;
+      }
       enviar.textContent = 'Enviando…';
       gravar('reg75:pessoa', { nome, telefone });
       const lista = pecas();
