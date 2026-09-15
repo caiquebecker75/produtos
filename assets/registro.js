@@ -89,8 +89,10 @@ export function iniciarRegistro(P, { toast, ICON, senhaHash, pecas = () => [], n
   }
 
   // antes de abrir a página: nome, telefone, loja e localização são obrigatórios (resolve depois de registrar)
+  // quem chega pelo QR SEMPRE preenche (escaneou = está instalando agora, pode ser outra loja);
+  // o pulo de 12 h vale só para quem volta pelo link para consultar a montagem
   function exigir() {
-    if (jaRegistrou()) return Promise.resolve();
+    if (!veioDoQR && jaRegistrou()) return Promise.resolve();
     return new Promise((resolve) => abrir({ obrigatorio: true, aoConcluir: resolve }));
   }
 
