@@ -4,6 +4,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { PALETA, siglaDe } from '../painel/marcadores.js';
 
 const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const [slug, cliente = 'Cliente', nome = 'Nome da peça', linha = ''] = process.argv.slice(2);
@@ -39,10 +40,15 @@ mkdirSync(path.join(pasta, 'img'), { recursive: true });
 writeFileSync(path.join(pasta, 'index.html'), html);
 
 const lista = JSON.parse(readFileSync(path.join(raiz, 'projetos.json'), 'utf8'));
-lista.unshift({ slug, cliente, nome: titulo, criado: new Date().toISOString().slice(0, 10) });
+// marcador no mapa do painel: primeira cor da paleta ainda livre (e sigla sem repetir)
+const usadas = new Set(lista.map((p) => p.cor));
+const cor = PALETA.find((c) => !usadas.has(c)) || PALETA[lista.length % PALETA.length];
+let sigla = siglaDe(titulo);
+if (lista.some((p) => p.sigla === sigla)) sigla = (sigla + String(lista.length + 1)).slice(0, 3);
+lista.unshift({ slug, cliente, nome: titulo, cor, sigla, criado: new Date().toISOString().slice(0, 10) });
 writeFileSync(path.join(raiz, 'projetos.json'), JSON.stringify(lista, null, 2) + '\n');
 
-console.log(`${slug}/index.html criado e registrado em projetos.json
+console.log(`${slug}/index.html criado e registrado em projetos.json (marcador ${sigla} ${cor})
 Próximos passos:
   1. Editar o JSON da página (${slug}/index.html)
   2. Imagens em ${slug}/img/ (display.webp sem fundo, logo-cliente.webp, dimensional.webp)

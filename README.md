@@ -52,7 +52,7 @@ Texto aceita `**negrito**`. Campos: `slug`, `cliente`, `logoCliente`, `nome`, `l
   Publicar: `firebase deploy --only firestore:rules`.
 - A localização depende da permissão do navegador (o celular pergunta uma vez). Se o promotor negar, o registro vai sem ponto e o painel mostra "Bloqueada".
 - Domínio novo para o painel? Adicionar em Firebase → Authentication → Configurações → Domínios autorizados.
-- `projetos.json` lista as páginas no painel (inclusive as que ainda não têm registro). O `novo-projeto.mjs` já atualiza.
+- `projetos.json` lista as páginas no painel (inclusive as que ainda não têm registro) com o **marcador do mapa** de cada uma (`cor` e `sigla`; `formato` opcional `gota`/`quadrado`). O `novo-projeto.mjs` já registra com a primeira cor livre da paleta (`painel/marcadores.js`). Não troque a cor de uma página que já tem pontos no mapa.
 
 ## Senha de acesso
 

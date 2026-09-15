@@ -1,6 +1,7 @@
 // Painel de instalações 75 LAB — lê Firestore/instalacoes em tempo real (só contas @75lab.com.br).
 import { firebaseConfig, FIREBASE_SDK } from '../assets/firebase-config.js?v=1';
 import { hashSenha, normalizarSenha } from '../assets/senha.js?v=1';
+import { estiloProjeto, htmlMarcador } from './marcadores.js?v=1';
 
 const [{ initializeApp }, A, F] = await Promise.all([
   import(`${FIREBASE_SDK}/firebase-app.js`),
@@ -174,7 +175,7 @@ function desenhar() {
     const p = nomeProjeto(s);
     const n = cont[s] || 0;
     return `<li class="${s === sel ? 'sel' : ''}">
-      <span class="pn">${esc(p.nome)}</span><span class="pq">${n}</span>
+      <span class="pn">${htmlMarcador(estiloProjeto(s, catalogo), 22)}${esc(p.nome)}</span><span class="pq">${n}</span>
       <span class="pc">${esc(p.cliente)}</span>
       <span class="pbar"><i style="width:${(n / max) * 100}%"></i></span>
       <span class="plinks"><a href="#" data-filtrar="${esc(s)}">Filtrar</a><a href="${BASE_PAGINAS}${encodeURIComponent(s)}/" target="_blank" rel="noopener">Página</a><a href="qr.html?p=${encodeURIComponent(s)}" target="_blank" rel="noopener">Etiqueta QR</a></span>
@@ -194,26 +195,40 @@ function desenharMapa(lista) {
   }
   camada.clearLayers();
   const comGeo = lista.filter((r) => r.geo);
-  const icone = L.divIcon({ className: '', html: '<div class="pin"></div>', iconSize: [18, 18] });
+  const icones = {};
+  const icone = (slug) => (icones[slug] ??= L.divIcon({
+    className: 'mk-leaflet', html: htmlMarcador(estiloProjeto(slug, catalogo)), iconSize: [34, 34], iconAnchor: [17, 34], popupAnchor: [0, -30],
+  }));
   comGeo.forEach((r) => {
-    L.marker([r.geo.lat, r.geo.lng], { icon: icone }).addTo(camada).bindPopup(
+    L.marker([r.geo.lat, r.geo.lng], { icon: icone(r.projeto), title: nomeProjeto(r.projeto).nome }).addTo(camada).bindPopup(
       `<b>${esc(r.loja)}</b><br>${esc(nomeProjeto(r.projeto).nome)}<br>${esc(r.nome)} · ${esc(telFmt(r.telefone))}<br>${dataFmt(r.data)}`,
     );
   });
   $('#mapa-dica').textContent = `${comGeo.length} ponto${comGeo.length === 1 ? '' : 's'} no mapa`;
+  // legenda: um marcador por página que aparece no mapa
+  const porProjeto = {};
+  comGeo.forEach((r) => { porProjeto[r.projeto] = (porProjeto[r.projeto] || 0) + 1; });
+  const sel = $('#f-projeto').value;
+  $('#legenda').innerHTML = Object.keys(porProjeto)
+    .sort((a, b) => nomeProjeto(a).nome.localeCompare(nomeProjeto(b).nome, 'pt-BR'))
+    .map((slug) => `<button type="button" class="leg ${slug === sel ? 'sel' : ''}" data-filtrar="${esc(slug)}" title="Filtrar ${esc(nomeProjeto(slug).nome)}">
+      ${htmlMarcador(estiloProjeto(slug, catalogo), 24)}<span>${esc(nomeProjeto(slug).nome)}</span><small>${porProjeto[slug]}</small></button>`).join('')
+    || '<span class="dica">Os pontos aparecem aqui assim que alguém registrar uma instalação com a localização liberada.</span>';
   if (comGeo.length) mapa.fitBounds(L.latLngBounds(comGeo.map((r) => [r.geo.lat, r.geo.lng])).pad(0.3), { maxZoom: 15 });
 }
 
 // ---------------------------------------------------------------- ações
 ['#f-projeto', '#f-periodo'].forEach((s) => $(s).addEventListener('change', desenhar));
 $('#f-busca').addEventListener('input', desenhar);
-$('#lista-projetos').addEventListener('click', (e) => {
+const filtrarProjeto = (e) => {
   const a = e.target.closest('[data-filtrar]');
   if (!a) return;
   e.preventDefault();
   $('#f-projeto').value = $('#f-projeto').value === a.dataset.filtrar ? '' : a.dataset.filtrar;
   desenhar();
-});
+};
+$('#lista-projetos').addEventListener('click', filtrarProjeto);
+$('#legenda').addEventListener('click', filtrarProjeto);
 $('#linhas').addEventListener('click', async (e) => {
   const b = e.target.closest('[data-apagar]');
   if (!b) return;

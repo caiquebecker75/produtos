@@ -69,7 +69,21 @@ b { font-weight: 500; }
 .card h2 { font-family: var(--anton); font-weight: 400; font-size: 15px; letter-spacing: 2px; text-transform: uppercase; }
 .dica { font-size: 12.5px; color: var(--ink3); }
 #mapa { height: 380px; border-radius: 14px; background: var(--paper); z-index: 0; }
-.pin { width: 18px; height: 18px; border-radius: 50%; background: var(--lime); box-shadow: 0 0 0 3px var(--ink); }
+.mk-leaflet { background: none; border: 0; }
+.mk { --s: 34px; width: var(--s); height: var(--s); display: inline-grid; place-items: center; background: var(--c); color: var(--t); box-shadow: 0 0 0 2px #fff, 0 2px 6px rgba(14,17,16,.35); flex: none; vertical-align: middle; }
+.mk b { font-family: var(--anton); font-weight: 400; font-size: calc(var(--s) * .36); letter-spacing: .4px; line-height: 1; }
+.mk-gota { border-radius: 50% 50% 50% 0; transform: rotate(-45deg); }
+.mk-gota b { transform: rotate(45deg); }
+.mk-quadrado { border-radius: 28%; }
+.leg .mk, .projetos .mk { box-shadow: none; }
+.leg .mk-gota, .projetos .mk-gota { border-radius: 50%; transform: none; }
+.leg .mk-gota b, .projetos .mk-gota b { transform: none; }
+.projetos .pn .mk { margin-right: 8px; }
+.legenda { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.leg { display: inline-flex; align-items: center; gap: 8px; background: var(--paper); border: 0; border-radius: 30px; padding: 4px 12px 4px 4px; font-size: 13px; }
+.leg small { font-family: var(--anton); font-size: 13px; color: var(--ink2); }
+.leg.sel { background: var(--ink); color: #fff; }
+.leg.sel small { color: var(--lime); }
 .leaflet-popup-content { font-family: 'Lexend', sans-serif; font-size: 13px; line-height: 1.45; }
 .leaflet-popup-content b { font-weight: 600; }
 
