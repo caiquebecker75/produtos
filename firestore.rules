@@ -1,7 +1,9 @@
 rules_version = '2';
 // Instalações 75 LAB
-// - Qualquer pessoa que escaneia o QR de uma página de produto pode CRIAR um registro de instalação.
-// - Só a equipe 75 LAB (login Google @75lab.com.br) lê, corrige ou apaga.
+// - Cada página de produto tem uma senha, definida pela equipe no painel (senhas/{projeto}).
+// - A página só abre com a senha: o navegador pede portas/{projeto}/chaves/{hash} e a regra compara o hash.
+// - Com a senha certa, quem escaneia o QR CRIA um registro de instalação.
+// - Só a equipe 75 LAB (login Google @75lab.com.br) lê registros e lê/troca senhas.
 service cloud.firestore {
   match /databases/{database}/documents {
 
@@ -15,6 +17,15 @@ service cloud.firestore {
       return v is string && v.size() >= min && v.size() <= max;
     }
 
+    function slugValido(s) {
+      return s is string && s.matches('^[a-z0-9]+(-[a-z0-9]+)*$') && s.size() <= 80;
+    }
+
+    function senhaConfere(projeto, hash) {
+      return exists(/databases/$(database)/documents/senhas/$(projeto))
+        && get(/databases/$(database)/documents/senhas/$(projeto)).data.hash == hash;
+    }
+
     function geoValida(g) {
       return g == null || (g is map
         && g.keys().hasOnly(['lat', 'lng', 'precisao'])
@@ -23,11 +34,27 @@ service cloud.firestore {
         && (!('precisao' in g) || g.precisao is number));
     }
 
+    match /senhas/{projeto} {
+      allow read, delete: if equipe75();
+      allow create, update: if equipe75()
+        && slugValido(projeto)
+        && request.resource.data.keys().hasOnly(['senha', 'hash', 'atualizadoEm', 'atualizadoPor'])
+        && texto(request.resource.data.senha, 4, 40)
+        && request.resource.data.hash is string && request.resource.data.hash.matches('^[0-9a-f]{64}$')
+        && request.resource.data.atualizadoEm == request.time
+        && request.resource.data.atualizadoPor == request.auth.token.email;
+    }
+
+    // "porta" da página: ler este caminho só é permitido com o hash da senha certa (o documento nem existe)
+    match /portas/{projeto}/chaves/{hash} {
+      allow get: if slugValido(projeto) && senhaConfere(projeto, hash);
+    }
+
     match /instalacoes/{id} {
       allow create: if request.resource.data.keys().hasOnly([
             'projeto', 'projetoNome', 'cliente', 'nome', 'telefone', 'loja',
-            'geo', 'geoStatus', 'origem', 'aparelho', 'criadoEm'])
-        && texto(request.resource.data.projeto, 2, 80)
+            'geo', 'geoStatus', 'origem', 'aparelho', 'senhaHash', 'criadoEm'])
+        && slugValido(request.resource.data.projeto)
         && texto(request.resource.data.projetoNome, 0, 140)
         && texto(request.resource.data.cliente, 0, 100)
         && texto(request.resource.data.nome, 2, 80)
@@ -37,7 +64,8 @@ service cloud.firestore {
         && texto(request.resource.data.geoStatus, 0, 20)
         && texto(request.resource.data.origem, 0, 10)
         && texto(request.resource.data.aparelho, 0, 200)
-        && request.resource.data.criadoEm == request.time;
+        && request.resource.data.criadoEm == request.time
+        && senhaConfere(request.resource.data.projeto, request.resource.data.senhaHash);
 
       allow read, update, delete: if equipe75();
     }

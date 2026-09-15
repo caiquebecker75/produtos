@@ -1,7 +1,8 @@
 // Registro de instalação: abre ao escanear o QR code (?qr=1) ou pelo botão "Registrar instalação".
 // Pede nome, telefone e loja, pega a localização do aparelho e grava em Firestore/instalacoes,
 // que só a equipe 75 LAB lê no painel (/painel/).
-import { firebaseConfig, FIREBASE_SDK } from './firebase-config.js?v=1';
+import { db } from './base.js?v=1';
+import { chaveAcesso } from './acesso.js?v=1';
 
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -10,16 +11,6 @@ const gravar = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } c
 
 const X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
 const PIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
-
-// ---------- Firestore (carrega só quando precisa) ----------
-let dbPromise;
-function db() {
-  dbPromise ??= Promise.all([
-    import(`${FIREBASE_SDK}/firebase-app.js`),
-    import(`${FIREBASE_SDK}/firebase-firestore-lite.js`),
-  ]).then(([app, fs]) => ({ fs, db: fs.getFirestore(app.initializeApp(firebaseConfig)) }));
-  return dbPromise;
-}
 
 // ---------- localização ----------
 const geo = { estado: 'parado', pos: null, espera: [] };
@@ -71,7 +62,7 @@ function mascara(d) {
   return `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}`;
 }
 
-export function iniciarRegistro(P, { toast, ICON }) {
+export function iniciarRegistro(P, { toast, ICON, senhaHash }) {
   const params = new URLSearchParams(location.search);
   const veioDoQR = params.has('qr');
   const chaveReg = `reg75:${P.slug}`;
@@ -153,6 +144,7 @@ export function iniciarRegistro(P, { toast, ICON }) {
       enviar.textContent = geo.estado === 'buscando' ? 'Pegando localização…' : 'Enviando…';
       await aguardarGeo(8000);
       enviar.textContent = 'Enviando…';
+      gravar('reg75:pessoa', { nome, telefone });
       try {
         const { fs, db: base } = await db();
         await fs.addDoc(fs.collection(base, 'instalacoes'), {
@@ -166,6 +158,7 @@ export function iniciarRegistro(P, { toast, ICON }) {
           geoStatus: geo.estado === 'buscando' ? 'tempo' : geo.estado,
           origem: veioDoQR ? 'qr' : 'link',
           aparelho: navigator.userAgent.slice(0, 200),
+          senhaHash,
           criadoEm: fs.serverTimestamp(),
         });
         gravar('reg75:pessoa', { nome, telefone });
@@ -186,6 +179,15 @@ export function iniciarRegistro(P, { toast, ICON }) {
         });
       } catch (e) {
         console.error(e);
+        if (e.code === 'permission-denied') {
+          // a senha da página foi trocada no painel depois que este aparelho entrou
+          try { localStorage.removeItem(chaveAcesso(P.slug)); } catch {}
+          erro.textContent = 'A senha desta página foi trocada. Digite a nova senha para registrar.';
+          erro.hidden = false;
+          enviar.textContent = 'Aguarde…';
+          setTimeout(() => location.reload(), 2600);
+          return;
+        }
         enviar.disabled = false;
         enviar.textContent = 'Tentar de novo';
         erro.textContent = navigator.onLine

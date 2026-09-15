@@ -85,6 +85,16 @@ b { font-weight: 500; }
 .projetos a { color: var(--ink); }
 .projetos li.sel { background: var(--lime-s); border-radius: 12px; padding-inline: 10px; }
 
+.psenha { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; background: var(--paper); border-radius: 12px; padding: 8px 10px; font-size: 13px; margin-top: 4px; }
+.psenha span { margin-right: auto; }
+.psenha code { font-family: var(--anton); font-size: 15px; letter-spacing: 1.4px; background: #fff; border-radius: 8px; padding: 2px 8px; margin-left: 4px; }
+.psenha small { flex-basis: 100%; color: var(--ink3); font-size: 11.5px; }
+.psenha.sem { background: #FFF1D6; }
+.psenha.editar input { flex: 1 1 160px; min-width: 0; border: 0; background: #fff; border-radius: 10px; padding: 9px 10px; font-size: 14px; outline: none; }
+.btn-mini { background: #fff; border: 0; border-radius: 20px; padding: 6px 11px; font-size: 12.5px; font-weight: 500; flex: none; }
+.btn-mini.lime { background: var(--lime); }
+.btn-mini:disabled { opacity: .5; }
+
 /* tabela */
 .tabela-wrap { overflow-x: auto; margin-inline: -18px; padding-inline: 18px; }
 .tabela { width: 100%; border-collapse: collapse; font-size: 13.5px; min-width: 920px; }

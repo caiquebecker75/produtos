@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Etiqueta QR · 75 LAB</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="../assets/img/favicon.svg">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Lexend:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root { --lime: #C0EE4E; --lime-s: #EAFBC0; --ink: #0E1110; --ink2: #54594E; --ink3: #9AA08F; --paper: #F1F2EC; --anton: 'Anton', 'Impact', sans-serif; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--paper); color: var(--ink); font-family: 'Lexend', system-ui, sans-serif; font-weight: 300; padding: 24px 16px 48px; }
+  [hidden] { display: none !important; }
+  .wrap { max-width: 980px; margin: 0 auto; display: grid; gap: 28px; grid-template-columns: 1fr; align-items: start; }
+  @media (min-width: 820px) { .wrap { grid-template-columns: minmax(0, 440px) 1fr; gap: 48px; } }
+  .etiqueta { background: #fff; border-radius: 24px; padding: 18px; }
+  .etiqueta img { display: block; width: 100%; height: auto; border-radius: 10px; }
+  .topo img { height: 36px; width: auto; }
+  .eyebrow { font-family: var(--anton); font-size: 12px; letter-spacing: 2.6px; text-transform: uppercase; color: var(--ink2); display: flex; gap: 10px; align-items: center; margin-top: 28px; }
+  .eyebrow::before { content: ""; width: 22px; height: 2px; background: #A6D934; }
+  h1 { font-weight: 200; text-transform: uppercase; font-size: clamp(32px, 5vw, 48px); line-height: .95; margin-top: 10px; letter-spacing: -.4px; }
+  h1 b { font-weight: 600; display: block; }
+  .info { margin-top: 14px; color: var(--ink2); font-size: 15px; line-height: 1.5; }
+  .info b { color: var(--ink); font-weight: 500; }
+  .acoes { display: grid; gap: 8px; margin-top: 26px; }
+  .btn { display: flex; align-items: center; justify-content: space-between; gap: 12px; text-decoration: none; color: var(--ink); background: #fff; border: 0; border-radius: 14px; padding: 15px 18px; font: inherit; font-weight: 500; font-size: 15px; cursor: pointer; }
+  .btn small { font-weight: 300; color: var(--ink3); font-size: 12.5px; }
+  .btn.principal { background: var(--ink); color: var(--lime); font-family: var(--anton); font-weight: 400; letter-spacing: 1.4px; text-transform: uppercase; font-size: 16px; }
+  .btn.principal small { color: #9AA08F; font-family: 'Lexend', sans-serif; letter-spacing: 0; text-transform: none; }
+  .url { margin-top: 22px; font-size: 12.5px; color: var(--ink3); word-break: break-all; }
+  .falta { background: #FFF1D6; border-radius: 16px; padding: 18px; font-size: 14px; line-height: 1.5; }
+  .falta code { background: #fff; border-radius: 6px; padding: 2px 6px; font-size: 13px; }
+  @media print {
+    @page { size: 100mm 150mm; margin: 0; }
+    body { padding: 0; background: #fff; }
+    .lado, .topo-print { display: none !important; }
+    .wrap { display: block; }
+    .etiqueta { padding: 0; border-radius: 0; }
+    .etiqueta img { width: 100mm; height: 150mm; border-radius: 0; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <figure class="etiqueta">
+    <img id="img" alt="Etiqueta com o QR code da peça">
+    <div class="falta" id="falta" hidden></div>
+  </figure>
+  <div class="lado">
+    <div class="topo"><img src="../assets/img/logo-75lab-preto.png" alt="75 LAB" width="51" height="36"></div>
+    <div class="eyebrow">Etiqueta QR · 10 × 15 cm</div>
+    <h1 id="titulo">Etiqueta <b>da peça</b></h1>
+    <p class="info">Imprima e mande junto com a peça. Quem escanear vai precisar da <b>senha de acesso</b> definida no painel.</p>
+    <div class="acoes">
+      <button class="btn principal" id="imprimir" type="button">Imprimir <small>tamanho real 10 × 15 cm</small></button>
+      <a class="btn" id="pdf" download>Baixar PDF <small>para a gráfica</small></a>
+      <a class="btn" id="png" download>Baixar PNG <small>300 dpi</small></a>
+      <a class="btn" id="qrpng" download>Só o QR code (PNG) <small>para a arte da embalagem</small></a>
+      <a class="btn" id="qrsvg" download>Só o QR code (SVG) <small>vetor</small></a>
+    </div>
+    <p class="url" id="url"></p>
+  </div>
+</div>
+<script>
+  const slug = (new URLSearchParams(location.search).get('p') || '').replace(/[^a-z0-9-]/g, '');
+  const base = `../${slug}/qr/`;
+  const img = document.getElementById('img');
+  const nomes = { pdf: 'etiqueta.pdf', png: 'etiqueta.png', qrpng: 'qr-code.png', qrsvg: 'qr-code.svg' };
+  Object.entries(nomes).forEach(([id, arq]) => {
+    const a = document.getElementById(id);
+    a.href = base + arq;
+    a.setAttribute('download', `${slug}-${arq}`);
+  });
+  document.getElementById('url').textContent = `O QR abre: https://projetos.75lab.com.br/produtos/${slug}/?qr=1`;
+  img.src = base + 'etiqueta.png?t=' + Date.now();
+  img.onerror = () => {
+    img.hidden = true;
+    const f = document.getElementById('falta');
+    f.innerHTML = slug
+      ? `A etiqueta desta peça ainda não foi gerada. Rode <code>node tools/qr.mjs ${slug}</code> no repositório e publique.`
+      : 'Nenhuma peça informada.';
+    f.hidden = false;
+    document.querySelectorAll('.acoes').forEach((el) => { el.hidden = true; });
+  };
+  document.getElementById('imprimir').addEventListener('click', () => window.print());
+  fetch('../projetos.json', { cache: 'no-store' }).then((r) => r.json()).then((lista) => {
+    const p = lista.find((x) => x.slug === slug);
+    if (!p) return;
+    document.title = `Etiqueta QR · ${p.nome}`;
+    document.getElementById('titulo').innerHTML = `${p.nome.replace(/[<>&]/g, '')} <b>${(p.cliente || '').replace(/[<>&]/g, '')}</b>`;
+  }).catch(() => {});
+</script>
+</body>
+</html>

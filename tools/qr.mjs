@@ -51,8 +51,8 @@ body { font-family: 'Lexend', sans-serif; color: #0E1110; background: #C0EE4E; d
 h1 { font-weight: 200; text-transform: uppercase; font-size: 22pt; line-height: .95; margin-top: 6mm; letter-spacing: -.3pt; }
 h1 b { font-weight: 600; display: block; }
 .qr { background: #fff; border-radius: 5mm; padding: 3mm 4mm 4mm; margin-top: 5mm; }
-.qr svg { width: 62mm; height: 62mm; display: block; margin: 0 auto; }
-.qr ol { list-style: none; display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 3mm; font-size: 7pt; line-height: 1.25; margin-top: 2mm; }
+.qr svg { width: 56mm; height: 56mm; display: block; margin: 0 auto; }
+.qr ol { list-style: none; display: grid; grid-template-columns: 1fr 1fr; gap: 2mm 3mm; font-size: 7pt; line-height: 1.25; margin-top: 2mm; }
 .qr li { display: flex; gap: 2mm; align-items: baseline; }
 .qr li i { font-style: normal; font-family: 'Anton', sans-serif; background: #0E1110; color: #C0EE4E; border-radius: 50%; width: 4.2mm; height: 4.2mm; flex: none; display: grid; place-items: center; font-size: 6.5pt; }
 .peca { margin-top: auto; background: #0E1110; color: #fff; border-radius: 5mm; padding: 4mm 5mm; }
@@ -63,9 +63,9 @@ h1 b { font-weight: 600; display: block; }
 <div class="top"><img src="${logo('logo-75lab-preto.png')}" alt="75 LAB"><span>Ideia boa é a que acontece</span></div>
 <h1>Escaneie <b>antes de montar</b></h1>
 <div class="qr">${svg}<ol>
-  <li><i>1</i><span>Registre a loja onde a peça vai ficar</span></li>
-  ${P.ar?.glb ? '<li><i>2</i><span>Veja a peça no local em realidade aumentada</span></li>' : ''}
-  <li><i>${P.ar?.glb ? 3 : 2}</i><span>Siga o passo a passo e o checklist</span></li>
+  ${['Digite a senha de acesso passada pelo responsável', 'Registre a loja onde a peça vai ficar',
+      ...(P.ar?.glb ? ['Veja a peça no local em realidade aumentada'] : []), 'Siga o passo a passo e o checklist']
+    .map((t, i) => `<li><i>${i + 1}</i><span>${t}</span></li>`).join('')}
 </ol></div>
 <div class="peca"><small>${esc(P.cliente)}</small><b>${esc(P.nome)} ${esc(P.linha || '')}</b><span>projetos.75lab.com.br/produtos/${esc(slug)}</span></div>
 </body></html>`;

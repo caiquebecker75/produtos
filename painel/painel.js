@@ -1,5 +1,6 @@
 // Painel de instalações 75 LAB — lê Firestore/instalacoes em tempo real (só contas @75lab.com.br).
 import { firebaseConfig, FIREBASE_SDK } from '../assets/firebase-config.js?v=1';
+import { hashSenha, normalizarSenha } from '../assets/senha.js?v=1';
 
 const [{ initializeApp }, A, F] = await Promise.all([
   import(`${FIREBASE_SDK}/firebase-app.js`),
@@ -50,9 +51,12 @@ $('#entrar').addEventListener('click', async () => {
 $('#sair').addEventListener('click', () => A.signOut(auth));
 
 let pararLeitura = null;
+let pararSenhas = null;
+let usuarioEmail = '';
 A.onAuthStateChanged(auth, async (user) => {
   pararLeitura?.();
-  pararLeitura = null;
+  pararSenhas?.();
+  pararLeitura = pararSenhas = null;
   if (!user) return telas('login');
   if (!user.email?.toLowerCase().endsWith(DOMINIO) || !user.emailVerified) {
     await A.signOut(auth);
@@ -61,6 +65,7 @@ A.onAuthStateChanged(auth, async (user) => {
     return telas('login');
   }
   $('#usuario').textContent = user.email;
+  usuarioEmail = user.email;
   telas('painel');
   iniciar();
 });
@@ -69,9 +74,17 @@ A.onAuthStateChanged(auth, async (user) => {
 let registros = [];
 let catalogo = [];
 let mapa, camada;
+let senhas = {};          // slug → { senha, atualizadoEm, atualizadoPor }
+let editando = null;      // slug com o campo de senha aberto
+let rascunho = '';
+const visiveis = new Set();
 
 async function iniciar() {
   try { catalogo = await (await fetch('../projetos.json', { cache: 'no-store' })).json(); } catch { catalogo = []; }
+  pararSenhas = F.onSnapshot(F.collection(db, 'senhas'), (snap) => {
+    senhas = Object.fromEntries(snap.docs.map((d) => [d.id, d.data()]));
+    if (!editando) desenhar();
+  }, (e) => console.error(e));
   const q = F.query(F.collection(db, 'instalacoes'), F.orderBy('criadoEm', 'desc'), F.limit(5000));
   pararLeitura = F.onSnapshot(q, (snap) => {
     registros = snap.docs.map((d) => {
@@ -79,7 +92,7 @@ async function iniciar() {
       return { id: d.id, ...r, data: r.criadoEm?.toDate?.() || null };
     });
     preencherProjetos();
-    desenhar();
+    if (!editando) desenhar();
   }, (e) => {
     console.error(e);
     toast(e.code === 'permission-denied' ? 'Sem permissão para ler os registros.' : 'Erro ao carregar os registros.');
@@ -154,7 +167,7 @@ function desenhar() {
   const base = filtrados({ ignorarProjeto: true });
   const cont = {};
   base.forEach((r) => { cont[r.projeto] = (cont[r.projeto] || 0) + 1; });
-  const slugs = [...new Set([...catalogo.map((p) => p.slug), ...Object.keys(cont)])].sort((a, b) => (cont[b] || 0) - (cont[a] || 0) || nomeProjeto(a).nome.localeCompare(nomeProjeto(b).nome, 'pt-BR'));
+  const slugs = [...new Set([...catalogo.map((p) => p.slug), ...Object.keys(cont), ...Object.keys(senhas)])].sort((a, b) => (cont[b] || 0) - (cont[a] || 0) || nomeProjeto(a).nome.localeCompare(nomeProjeto(b).nome, 'pt-BR'));
   const max = Math.max(1, ...Object.values(cont));
   const sel = $('#f-projeto').value;
   $('#lista-projetos').innerHTML = slugs.map((s) => {
@@ -164,7 +177,8 @@ function desenhar() {
       <span class="pn">${esc(p.nome)}</span><span class="pq">${n}</span>
       <span class="pc">${esc(p.cliente)}</span>
       <span class="pbar"><i style="width:${(n / max) * 100}%"></i></span>
-      <span class="plinks"><a href="#" data-filtrar="${esc(s)}">Filtrar</a><a href="${BASE_PAGINAS}${encodeURIComponent(s)}/" target="_blank" rel="noopener">Página</a><a href="${BASE_PAGINAS}${encodeURIComponent(s)}/qr/qr-code.png" target="_blank" rel="noopener">QR code</a></span>
+      <span class="plinks"><a href="#" data-filtrar="${esc(s)}">Filtrar</a><a href="${BASE_PAGINAS}${encodeURIComponent(s)}/" target="_blank" rel="noopener">Página</a><a href="qr.html?p=${encodeURIComponent(s)}" target="_blank" rel="noopener">Etiqueta QR</a></span>
+      ${linhaSenha(s)}
     </li>`;
   }).join('') || '<li class="pc">Nenhum projeto ainda.</li>';
 
@@ -240,5 +254,87 @@ $('#exportar').addEventListener('click', () => {
     a.href = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv' }));
     a.download = `${nome}.csv`;
     a.click();
+  }
+});
+
+// ---------------------------------------------------------------- senhas de acesso das páginas
+function linhaSenha(slug) {
+  const atual = senhas[slug];
+  if (editando === slug) {
+    return `<form class="psenha editar" data-senha-form="${esc(slug)}">
+      <input name="senha" value="${esc(rascunho)}" placeholder="Nova senha (mín. 4 caracteres)" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="40">
+      <button type="submit" class="btn-mini lime">Salvar</button>
+      <button type="button" class="btn-mini" data-senha-cancelar>Cancelar</button>
+    </form>`;
+  }
+  if (!atual) {
+    return `<div class="psenha sem"><span>Sem senha: <b>página bloqueada</b></span><button type="button" class="btn-mini lime" data-senha-editar="${esc(slug)}">Criar senha</button></div>`;
+  }
+  const ver = visiveis.has(slug);
+  const quando = atual.atualizadoEm?.toDate?.().toLocaleDateString('pt-BR') || '';
+  return `<div class="psenha">
+    <span>Senha <code>${ver ? esc(atual.senha) : '•'.repeat(Math.min(atual.senha.length, 10))}</code></span>
+    <button type="button" class="btn-mini" data-senha-ver="${esc(slug)}">${ver ? 'Esconder' : 'Ver'}</button>
+    <button type="button" class="btn-mini" data-senha-copiar="${esc(slug)}">Copiar</button>
+    <button type="button" class="btn-mini" data-senha-editar="${esc(slug)}">Trocar</button>
+    ${quando ? `<small>alterada em ${quando}${atual.atualizadoPor ? ` por ${esc(atual.atualizadoPor.split('@')[0])}` : ''}</small>` : ''}
+  </div>`;
+}
+
+function focarSenha() {
+  const input = document.querySelector('[data-senha-form] input');
+  if (!input) return;
+  input.focus();
+  input.setSelectionRange(input.value.length, input.value.length);
+}
+
+$('#lista-projetos').addEventListener('click', async (e) => {
+  const alvo = e.target.closest('[data-senha-editar],[data-senha-ver],[data-senha-copiar],[data-senha-cancelar]');
+  if (!alvo) return;
+  if (alvo.dataset.senhaEditar) {
+    editando = alvo.dataset.senhaEditar;
+    rascunho = '';
+    desenhar();
+    focarSenha();
+  } else if (alvo.dataset.senhaVer) {
+    const s = alvo.dataset.senhaVer;
+    visiveis.has(s) ? visiveis.delete(s) : visiveis.add(s);
+    desenhar();
+  } else if (alvo.dataset.senhaCopiar) {
+    const senha = senhas[alvo.dataset.senhaCopiar]?.senha || '';
+    try { await navigator.clipboard.writeText(senha); toast('Senha copiada.'); } catch { window.prompt('Copie a senha:', senha); }
+  } else if ('senhaCancelar' in alvo.dataset) {
+    editando = null;
+    desenhar();
+  }
+});
+$('#lista-projetos').addEventListener('input', (e) => {
+  if (e.target.closest('[data-senha-form]')) rascunho = e.target.value;
+});
+$('#lista-projetos').addEventListener('submit', async (e) => {
+  const form = e.target.closest('[data-senha-form]');
+  if (!form) return;
+  e.preventDefault();
+  const slug = form.dataset.senhaForm;
+  const senha = normalizarSenha(form.senha.value);
+  if (senha.length < 4) { toast('A senha precisa ter pelo menos 4 caracteres.'); return focarSenha(); }
+  const troca = Boolean(senhas[slug]);
+  if (troca && !confirm(`Trocar a senha de "${nomeProjeto(slug).nome}"? Quem já entrou com a senha antiga vai precisar digitar a nova.`)) return;
+  form.querySelectorAll('button, input').forEach((el) => { el.disabled = true; });
+  try {
+    await F.setDoc(F.doc(db, 'senhas', slug), {
+      senha,
+      hash: await hashSenha(slug, senha),
+      atualizadoEm: F.serverTimestamp(),
+      atualizadoPor: usuarioEmail,
+    });
+    editando = null;
+    visiveis.add(slug);
+    toast(troca ? 'Senha trocada. A página já pede a nova senha.' : 'Senha criada. A página já está liberada com ela.');
+    desenhar();
+  } catch (err) {
+    console.error(err);
+    toast('Não foi possível salvar a senha.');
+    form.querySelectorAll('button, input').forEach((el) => { el.disabled = false; });
   }
 });
