@@ -291,6 +291,11 @@ section { position: relative; }
 }
 @keyframes sobe { from { transform: translateY(40px); opacity: 0; } }
 @media (min-width: 620px) { .sheet-bg { align-items: center; } .sheet { border-radius: 28px; } }
+/* registro obrigatório antes da página: fundo da marca, sem fechar */
+.sheet-bg.obrigatorio { background: var(--lime); align-items: center; overflow-y: auto; padding: 16px; z-index: 70; }
+.sheet-bg.obrigatorio .sheet { border-radius: 28px; margin: auto; }
+.reg-aviso { margin-top: 12px; font-size: 14.5px; color: var(--ink2); }
+.reg-aviso b { color: var(--ink); font-weight: 500; }
 .sheet-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .sheet-top .tag { font-family: var(--anton); font-size: 11px; letter-spacing: 2px; text-transform: uppercase; background: var(--lime); padding: 5px 10px 4px; border-radius: 20px; }
 .fechar { background: var(--paper); border: 0; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; flex: none; }

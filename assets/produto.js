@@ -3,7 +3,7 @@
 // — depois da senha, a pessoa escolhe as peças que vai executar e a página mostra só essas
 // (o registro de instalação guarda quais foram). Blocos sem dados simplesmente não aparecem.
 // Texto aceita **negrito**. Ver modelo/index.html para os campos.
-import { iniciarRegistro } from './registro.js?v=6';
+import { iniciarRegistro } from './registro.js?v=7';
 import { exigirSenha, pecasDesligadas, telaSemPecas } from './acesso.js?v=4';
 import { escolherPecas } from './selecao.js?v=2';
 
@@ -577,8 +577,7 @@ if (KIT) {
   guardarSelecao(sel);
 }
 
-renderizar(selecionadas);
-
+let montada = false;
 const registro = iniciarRegistro(P, {
   toast, ICON, senhaHash,
   pecas: () => (KIT ? selecionadas : []),
@@ -586,13 +585,21 @@ const registro = iniciarRegistro(P, {
   trocarPecas: KIT ? () => trocar() : null,
 });
 
+// registro obrigatório antes de abrir a página (QR ou link): pula só se este aparelho já registrou estas peças nas últimas 12 h
+await registro.exigir();
+renderizar(selecionadas);
+montada = true;
+registro.atualizarBotao();
+
 async function trocar() {
   const sel = await escolherPecas(P, { inicial: selecionadas, cancelavel: true });
   if (!sel) return;
   guardarSelecao(sel);
+  if (!montada) return; // trocou dentro do registro obrigatório: a página ainda não abriu
   renderizar(sel);
   registro.atualizarBotao();
   window.scrollTo({ top: 0, behavior: 'instant' });
   toast(`Página com ${sel.length} peça${sel.length > 1 ? 's' : ''}.`);
+  if (!registro.jaRegistrou()) registro.abrir(); // peça que ainda não foi registrada nesta loja
 }
 document.addEventListener('click', (e) => { if (e.target.closest('[data-trocar-pecas]') && !e.target.closest('.sheet')) trocar(); });
