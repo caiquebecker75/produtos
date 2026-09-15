@@ -348,11 +348,14 @@ blocos.forEach(([id]) => io.observe(document.getElementById(id)));
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) mv.removeAttribute('auto-rotate');
 
   // só baixa o visualizador 3D quando o bloco chega perto da tela
-  const carregar = () => import(new URL('../vendor/model-viewer.min.js', import.meta.url).href);
+  let pedido = null;
+  const carregar = () => (pedido ??= import(new URL('../vendor/model-viewer.min.js', import.meta.url).href));
   const perto = new IntersectionObserver((ents) => {
     if (ents.some((e) => e.isIntersecting)) { perto.disconnect(); carregar(); }
   }, { rootMargin: '600px 0px' });
   perto.observe(mv);
+  // garantia: navegadores embutidos (WhatsApp, Instagram) às vezes não avisam a rolagem — carrega mesmo assim
+  setTimeout(() => { perto.disconnect(); carregar(); }, 5000);
 
   const barra = $('#ar .progress');
   mv.addEventListener('progress', (e) => {
