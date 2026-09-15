@@ -108,6 +108,14 @@ b { font-weight: 500; }
 .btn-mini.escuro { background: var(--ink); color: #fff; }
 .btn-mini.contorno { box-shadow: inset 0 0 0 1px var(--rule); }
 .pacesso { margin-top: 2px; }
+.ppecas-on { grid-column: 1 / -1; display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-size: 13px; margin-top: 6px; }
+.ppecas-on .rot { font-weight: 500; margin-right: 4px; }
+.ppecas-on small { flex-basis: 100%; color: var(--ink3); font-size: 11.5px; }
+.chip-peca { display: inline-flex; align-items: center; gap: 6px; border: 0; border-radius: 20px; padding: 5px 11px 5px 9px; font: inherit; font-size: 12.5px; background: var(--lime-s, #EAFBC0); color: var(--ink); cursor: pointer; }
+.chip-peca i { width: 8px; height: 8px; border-radius: 50%; background: #3BB54A; flex: none; }
+.chip-peca.off { background: var(--paper); color: var(--ink3); text-decoration: line-through; }
+.chip-peca.off i { background: #E03131; }
+.chip-peca:disabled { opacity: .5; }
 .pacesso .estado i { background: var(--ink); }
 .pacesso.livre .estado { color: #8A5A00; }
 .pacesso.livre .estado i { background: #F59F00; }

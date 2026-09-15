@@ -77,7 +77,7 @@ A.onAuthStateChanged(auth, async (user) => {
 let registros = [];
 let catalogo = [];
 let mapa, camada;
-let paginas = {};         // slug → { ativo, atualizadoEm, atualizadoPor, semSenha, semSenhaEm, semSenhaPor }
+let paginas = {};         // slug → { ativo, atualizadoEm/Por, semSenha, semSenhaEm/Por, pecasOff[], pecasOffEm/Por }
 let senhas = {};          // slug → { senha, atualizadoEm, atualizadoPor }
 let editando = null;      // slug com o campo de senha aberto
 let rascunho = '';
@@ -219,6 +219,7 @@ function desenhar() {
       })()}
       <span class="plinks"><a href="#" data-filtrar="${esc(s)}">Filtrar</a><a href="${BASE_PAGINAS}${encodeURIComponent(s)}/" target="_blank" rel="noopener">Página</a><a href="qr.html?p=${encodeURIComponent(s)}" target="_blank" rel="noopener">Etiqueta QR</a></span>
       ${linhaStatus(s)}
+      ${linhaPecas(s)}
       ${linhaAcesso(s)}
       ${linhaSenha(s)}
     </li>`;
@@ -430,6 +431,55 @@ $('#lista-projetos').addEventListener('click', async (e) => {
   } catch (err) {
     console.error(err);
     toast('Não foi possível mudar o status da página.');
+    b.disabled = false;
+  }
+});
+
+// ---------------------------------------------------------------- enxoval: habilitar / desabilitar peças
+function linhaPecas(slug) {
+  const kit = catalogo.find((c) => c.slug === slug)?.pecas;
+  if (!kit?.length) return '';
+  const p = paginas[slug];
+  const off = p?.pecasOff || [];
+  const quando = p?.pecasOffEm?.toDate?.().toLocaleDateString('pt-BR') || '';
+  return `<div class="ppecas-on">
+    <span class="rot">Peças na página</span>
+    ${kit.map((pc) => {
+      const des = off.includes(pc.id);
+      return `<button type="button" class="chip-peca ${des ? 'off' : ''}" data-peca="${esc(slug)}" data-peca-id="${esc(pc.id)}" aria-pressed="${!des}" title="${des ? 'Desabilitada: clique para habilitar' : 'Habilitada: clique para desabilitar'}"><i></i>${esc(pc.nome)}</button>`;
+    }).join('')}
+    ${quando ? `<small>peças alteradas em ${quando}${p.pecasOffPor ? ` por ${esc(p.pecasOffPor.split('@')[0])}` : ''}${off.length ? ` · ${off.length} desabilitada${off.length > 1 ? 's' : ''}` : ''}</small>` : ''}
+  </div>`;
+}
+
+$('#lista-projetos').addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-peca-id]');
+  if (!b) return;
+  const slug = b.dataset.peca;
+  const id = b.dataset.pecaId;
+  const kit = catalogo.find((c) => c.slug === slug)?.pecas || [];
+  const off = paginas[slug]?.pecasOff || [];
+  const desligar = !off.includes(id);
+  const nomePeca = kit.find((pc) => pc.id === id)?.nome || id;
+  const nome = nomeProjeto(slug).nome;
+  if (desligar && kit.filter((pc) => !off.includes(pc.id)).length <= 1) {
+    return toast('Pelo menos uma peça precisa ficar habilitada. Para bloquear tudo, use Tirar do ar.');
+  }
+  const msg = desligar
+    ? `Desabilitar "${nomePeca}" em "${nome}"?\n\nA peça some da escolha de peças e da página, e nenhum registro novo com ela é aceito. Os registros antigos continuam no painel.`
+    : `Habilitar "${nomePeca}" em "${nome}" de novo?\n\nA peça volta para a escolha de peças e para a página.`;
+  if (!confirm(msg)) return;
+  b.disabled = true;
+  try {
+    await F.setDoc(F.doc(db, 'paginas', slug), {
+      pecasOff: desligar ? F.arrayUnion(id) : F.arrayRemove(id),
+      pecasOffEm: F.serverTimestamp(),
+      pecasOffPor: usuarioEmail,
+    }, { merge: true });
+    toast(desligar ? `${nomePeca} desabilitada.` : `${nomePeca} habilitada de novo.`);
+  } catch (err) {
+    console.error(err);
+    toast('Não foi possível mudar a peça.');
     b.disabled = false;
   }
 });

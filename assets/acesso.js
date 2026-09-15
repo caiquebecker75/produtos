@@ -14,6 +14,26 @@ const gravar = (k, v) => { try { v == null ? localStorage.removeItem(k) : localS
 
 export const chaveAcesso = (slug) => `acesso75:${slug}`;
 export const chaveLivre = (slug) => `livre75:${slug}`; // última vez que viu a página com acesso livre (vale sem internet)
+const chaveOff = (slug) => `pecasoff75:${slug}`;       // peças desabilitadas no painel na última leitura (vale sem internet)
+
+// enxoval: ids das peças desabilitadas no painel (use depois de exigirSenha, que faz a leitura)
+export function pecasDesligadas(slug) {
+  try { return JSON.parse(ler(chaveOff(slug)) || '[]'); } catch { return []; }
+}
+
+// enxoval com todas as peças desabilitadas (o painel não deixa, mas a página se defende)
+export function telaSemPecas(P) {
+  const tela = document.createElement('div');
+  tela.className = 'porta';
+  tela.innerHTML = `
+    <div class="porta-card">
+      ${cabecalho(P)}
+      <div class="fora-do-ar"><span class="fora-dot"></span>Nenhuma peça disponível</div>
+      <p class="porta-txt">As peças deste projeto estão desabilitadas pela 75 LAB no momento.</p>
+      <p class="lgpd">Precisa montar alguma peça? Fale com o responsável pela instalação ou com a 75 LAB: <a href="tel:+551150267313">11 5026-7313</a>.</p>
+    </div>`;
+  document.body.appendChild(tela);
+}
 
 // true = senha certa · false = senha errada (ou página fora do ar) · lança erro = sem conexão
 async function conferir(slug, hash) {
@@ -33,7 +53,9 @@ async function lerPagina(slug) {
     const { fs, db: base } = await db();
     const snap = await fs.getDoc(fs.doc(base, 'paginas', slug));
     const d = snap.exists() ? snap.data() : {};
-    return { ativo: d.ativo !== false, livre: d.semSenha === true };
+    const pecasOff = Array.isArray(d.pecasOff) ? d.pecasOff : [];
+    gravar(chaveOff(slug), pecasOff.length ? JSON.stringify(pecasOff) : null);
+    return { ativo: d.ativo !== false, livre: d.semSenha === true, pecasOff };
   } catch {
     return null;
   }

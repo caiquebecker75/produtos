@@ -2,7 +2,7 @@
 // Pede nome, telefone e loja, pega a localização do aparelho e grava em Firestore/instalacoes,
 // que só a equipe 75 LAB lê no painel (/painel/). No enxoval, grava também as peças executadas.
 import { db } from './base.js?v=1';
-import { chaveAcesso, chaveLivre } from './acesso.js?v=3';
+import { chaveAcesso, chaveLivre } from './acesso.js?v=4';
 
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -199,9 +199,9 @@ export function iniciarRegistro(P, { toast, ICON, senhaHash, pecas = () => [], n
       } catch (e) {
         console.error(e);
         if (e.code === 'permission-denied') {
-          // senha trocada, acesso livre desligado ou página tirada do ar no painel depois que este aparelho entrou
+          // senha trocada, acesso livre desligado, peça desabilitada ou página tirada do ar no painel depois que este aparelho entrou
           try { localStorage.removeItem(chaveAcesso(P.slug)); localStorage.removeItem(chaveLivre(P.slug)); } catch {}
-          erro.textContent = 'O acesso desta página mudou (senha nova ou página fora do ar). Recarregando…';
+          erro.textContent = 'Esta página mudou no painel (senha nova, peça desabilitada ou página fora do ar). Recarregando…';
           erro.hidden = false;
           enviar.textContent = 'Aguarde…';
           setTimeout(() => location.reload(), 2600);

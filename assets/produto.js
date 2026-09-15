@@ -3,8 +3,8 @@
 // — depois da senha, a pessoa escolhe as peças que vai executar e a página mostra só essas
 // (o registro de instalação guarda quais foram). Blocos sem dados simplesmente não aparecem.
 // Texto aceita **negrito**. Ver modelo/index.html para os campos.
-import { iniciarRegistro } from './registro.js?v=5';
-import { exigirSenha } from './acesso.js?v=3';
+import { iniciarRegistro } from './registro.js?v=6';
+import { exigirSenha, pecasDesligadas, telaSemPecas } from './acesso.js?v=4';
 import { escolherPecas } from './selecao.js?v=2';
 
 const $ = (s, el = document) => el.querySelector(s);
@@ -546,6 +546,16 @@ function iniciarCapitulos(sec) {
 // ---------------------------------------------------------------- fluxo: senha → peças (enxoval) → página → registro
 const senhaHash = await exigirSenha(P);
 
+// peças desabilitadas no painel somem da escolha, da página e do registro (KIT e P.kit são o mesmo array)
+if (KIT) {
+  const off = pecasDesligadas(P.slug);
+  for (let i = KIT.length - 1; i >= 0; i--) if (off.includes(KIT[i].id)) KIT.splice(i, 1);
+  if (!KIT.length) {
+    telaSemPecas(P);
+    await new Promise(() => {});
+  }
+}
+
 let selecionadas = [];
 const chaveSel = `sel75:${P.slug}`;
 function guardarSelecao(sel) {
@@ -561,7 +571,9 @@ if (KIT) {
   let anterior = [];
   try { anterior = validas(JSON.parse(localStorage.getItem(chaveSel) || '[]')); } catch {}
   // link com ?pecas= (ex.: QR do AR de uma peça) abre direto; QR do enxoval sempre pergunta
-  const sel = daUrl.length && !new URLSearchParams(location.search).has('qr') ? daUrl : await escolherPecas(P, { inicial: daUrl.length ? daUrl : anterior });
+  // só uma peça habilitada: não há o que escolher
+  const sel = KIT.length === 1 ? [KIT[0].id]
+    : daUrl.length && !new URLSearchParams(location.search).has('qr') ? daUrl : await escolherPecas(P, { inicial: daUrl.length ? daUrl : anterior });
   guardarSelecao(sel);
 }
 

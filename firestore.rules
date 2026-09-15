@@ -64,11 +64,19 @@ service cloud.firestore {
       let mudou = resource == null ? d.keys() : d.diff(resource.data).affectedKeys();
       return equipe75()
         && slugValido(projeto)
-        && d.keys().hasOnly(['ativo', 'atualizadoEm', 'atualizadoPor', 'semSenha', 'semSenhaEm', 'semSenhaPor'])
+        && d.keys().hasOnly(['ativo', 'atualizadoEm', 'atualizadoPor', 'semSenha', 'semSenhaEm', 'semSenhaPor', 'pecasOff', 'pecasOffEm', 'pecasOffPor'])
         && (!('ativo' in d) || d.ativo is bool)
         && (!('semSenha' in d) || d.semSenha is bool)
+        && (!('pecasOff' in d) || (d.pecasOff is list && d.pecasOff.size() <= 20))
         && (!mudou.hasAny(['ativo']) || (d.atualizadoEm == request.time && d.atualizadoPor == request.auth.token.email))
-        && (!mudou.hasAny(['semSenha']) || (d.semSenhaEm == request.time && d.semSenhaPor == request.auth.token.email));
+        && (!mudou.hasAny(['semSenha']) || (d.semSenhaEm == request.time && d.semSenhaPor == request.auth.token.email))
+        && (!mudou.hasAny(['pecasOff']) || (d.pecasOffEm == request.time && d.pecasOffPor == request.auth.token.email));
+    }
+
+    // enxoval: peças desabilitadas no painel (paginas/{projeto}.pecasOff) não entram em registro novo
+    function temPecaDesligada(projeto, pecas) {
+      return exists(/databases/$(database)/documents/paginas/$(projeto))
+        && get(/databases/$(database)/documents/paginas/$(projeto)).data.get('pecasOff', []).hasAny(pecas);
     }
 
     // no ar / fora do ar e acesso livre: qualquer um consulta uma página (a própria página precisa saber); só a equipe lista e muda
@@ -99,7 +107,8 @@ service cloud.firestore {
         && texto(request.resource.data.origem, 0, 10)
         && texto(request.resource.data.aparelho, 0, 200)
         // enxoval: peças executadas nesta instalação (páginas de uma peça só não mandam)
-        && (!('pecas' in request.resource.data) || (request.resource.data.pecas is list && request.resource.data.pecas.size() <= 20))
+        && (!('pecas' in request.resource.data) || (request.resource.data.pecas is list && request.resource.data.pecas.size() <= 20
+          && !temPecaDesligada(request.resource.data.projeto, request.resource.data.pecas)))
         && request.resource.data.criadoEm == request.time
         && paginaNoAr(request.resource.data.projeto)
         // página com acesso livre não manda senhaHash
