@@ -81,7 +81,7 @@ section { position: relative; }
 .cliente-nome { font-family: var(--anton); font-size: 14px; letter-spacing: 2.6px; text-transform: uppercase; margin-bottom: 18px; }
 .hero h1 {
   font-weight: 200; text-transform: uppercase; letter-spacing: -1px; line-height: .9;
-  font-size: clamp(46px, 11vw, 104px);
+  font-size: clamp(34px, 10.2vw, 104px); overflow-wrap: anywhere;
 }
 .hero h1 b { font-weight: 600; display: block; }
 .hero .sub { font-size: clamp(18px, 2.6vw, 26px); font-weight: 300; margin-top: 16px; }
