@@ -126,7 +126,7 @@ section { position: relative; }
   .galeria figure { scroll-snap-align: start; }
 }
 .desenho.planificado .gal-item { aspect-ratio: auto; padding: 0; background: transparent; }
-.desenho.planificado img { max-height: none; width: 100%; }
+.desenho.planificado .gal-item img { position: static; inset: auto; width: 100%; height: auto; max-height: none; }
 .zoom { position: fixed; inset: 0; z-index: 90; background: rgba(14,17,16,.94); display: grid; place-items: center; padding: 56px 12px calc(40px + var(--safe-b)); }
 .zoom figure { display: grid; gap: 10px; justify-items: center; max-height: 100%; }
 .zoom img { max-width: 100%; max-height: calc(100vh - 140px); max-height: calc(100svh - 140px); object-fit: contain; background: #fff; border-radius: 14px; }
