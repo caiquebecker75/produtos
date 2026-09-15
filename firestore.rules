@@ -26,6 +26,12 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/senhas/$(projeto)).data.hash == hash;
     }
 
+    // página tirada do ar no painel (paginas/{projeto}.ativo == false); sem documento = no ar
+    function paginaNoAr(projeto) {
+      return !exists(/databases/$(database)/documents/paginas/$(projeto))
+        || get(/databases/$(database)/documents/paginas/$(projeto)).data.ativo != false;
+    }
+
     function geoValida(g) {
       return g == null || (g is map
         && g.keys().hasOnly(['lat', 'lng', 'precisao'])
@@ -45,9 +51,21 @@ service cloud.firestore {
         && request.resource.data.atualizadoPor == request.auth.token.email;
     }
 
+    // no ar / fora do ar: qualquer um consulta uma página (a própria página precisa saber); só a equipe lista e muda
+    match /paginas/{projeto} {
+      allow get: if true;
+      allow list, delete: if equipe75();
+      allow create, update: if equipe75()
+        && slugValido(projeto)
+        && request.resource.data.keys().hasOnly(['ativo', 'atualizadoEm', 'atualizadoPor'])
+        && request.resource.data.ativo is bool
+        && request.resource.data.atualizadoEm == request.time
+        && request.resource.data.atualizadoPor == request.auth.token.email;
+    }
+
     // "porta" da página: ler este caminho só é permitido com o hash da senha certa (o documento nem existe)
     match /portas/{projeto}/chaves/{hash} {
-      allow get: if slugValido(projeto) && senhaConfere(projeto, hash);
+      allow get: if slugValido(projeto) && paginaNoAr(projeto) && senhaConfere(projeto, hash);
     }
 
     match /instalacoes/{id} {
@@ -65,6 +83,7 @@ service cloud.firestore {
         && texto(request.resource.data.origem, 0, 10)
         && texto(request.resource.data.aparelho, 0, 200)
         && request.resource.data.criadoEm == request.time
+        && paginaNoAr(request.resource.data.projeto)
         && senhaConfere(request.resource.data.projeto, request.resource.data.senhaHash);
 
       allow read, update, delete: if equipe75();

@@ -2,7 +2,7 @@
 // Pede nome, telefone e loja, pega a localização do aparelho e grava em Firestore/instalacoes,
 // que só a equipe 75 LAB lê no painel (/painel/).
 import { db } from './base.js?v=1';
-import { chaveAcesso } from './acesso.js?v=1';
+import { chaveAcesso } from './acesso.js?v=2';
 
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -180,9 +180,9 @@ export function iniciarRegistro(P, { toast, ICON, senhaHash }) {
       } catch (e) {
         console.error(e);
         if (e.code === 'permission-denied') {
-          // a senha da página foi trocada no painel depois que este aparelho entrou
+          // a senha foi trocada ou a página foi tirada do ar no painel depois que este aparelho entrou
           try { localStorage.removeItem(chaveAcesso(P.slug)); } catch {}
-          erro.textContent = 'A senha desta página foi trocada. Digite a nova senha para registrar.';
+          erro.textContent = 'A senha desta página foi trocada ou a página saiu do ar. Recarregando…';
           erro.hidden = false;
           enviar.textContent = 'Aguarde…';
           setTimeout(() => location.reload(), 2600);

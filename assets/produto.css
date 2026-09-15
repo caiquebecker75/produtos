@@ -321,6 +321,9 @@ section { position: relative; }
 .senha-box .mostrar { background: none; border: 0; padding: 0 16px; font-size: 13px; font-weight: 500; color: var(--ink2); flex: none; }
 .senha-box:has(input[aria-invalid="true"]) { background: #FBE3DF; }
 
+.fora-do-ar { display: inline-flex; align-items: center; gap: 10px; margin-top: 20px; background: var(--ink); color: #fff; border-radius: 30px; padding: 9px 16px 8px; font-family: var(--anton); font-size: 14px; letter-spacing: 1.6px; text-transform: uppercase; }
+.fora-dot { width: 9px; height: 9px; border-radius: 50%; background: #FF5A4E; flex: none; }
+
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .sheet { animation: none; } }
 @media print {
   .top, .chips, .ar, .faixa-reg, .sheet-bg, .video { display: none !important; }

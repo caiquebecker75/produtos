@@ -1,8 +1,8 @@
 // Página de produto 75 LAB — monta a página a partir do JSON <script type="application/json" id="projeto">.
 // Blocos sem dados (vídeo, AR, checklist...) simplesmente não aparecem.
 // Texto aceita **negrito**. Ver _modelo/index.html para todos os campos.
-import { iniciarRegistro } from './registro.js?v=2';
-import { exigirSenha } from './acesso.js?v=1';
+import { iniciarRegistro } from './registro.js?v=3';
+import { exigirSenha } from './acesso.js?v=2';
 
 const $ = (s, el = document) => el.querySelector(s);
 const P = JSON.parse($('#projeto').textContent);

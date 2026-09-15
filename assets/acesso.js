@@ -1,5 +1,6 @@
-// Senha de acesso: a página só abre depois da senha que a equipe 75 LAB define no painel.
-// Quem confere são as regras do Firestore (portas/{slug}/chaves/{hash}); a senha nunca chega ao navegador.
+// Acesso à página: (1) a página precisa estar no ar e (2) a pessoa precisa da senha que a equipe define no painel.
+// - paginas/{slug}.ativo == false → tela "fora do ar" (sem senha, sem conteúdo)
+// - senha conferida pelas regras do Firestore (portas/{slug}/chaves/{hash}); a senha nunca chega ao navegador.
 // Depois de acertar, o aparelho guarda o hash e só pede de novo se a senha for trocada no painel.
 import { db } from './base.js?v=1';
 import { hashSenha } from './senha.js?v=1';
@@ -11,7 +12,7 @@ const gravar = (k, v) => { try { v == null ? localStorage.removeItem(k) : localS
 
 export const chaveAcesso = (slug) => `acesso75:${slug}`;
 
-// true = senha certa · false = senha errada · lança erro = sem conexão
+// true = senha certa · false = senha errada (ou página fora do ar) · lança erro = sem conexão
 async function conferir(slug, hash) {
   const { fs, db: base } = await db();
   try {
@@ -23,10 +24,48 @@ async function conferir(slug, hash) {
   }
 }
 
+// true = no ar · false = tirada do ar no painel · null = não deu para saber (sem internet)
+async function paginaNoAr(slug) {
+  try {
+    const { fs, db: base } = await db();
+    const snap = await fs.getDoc(fs.doc(base, 'paginas', slug));
+    return !snap.exists() || snap.data().ativo !== false;
+  } catch {
+    return null;
+  }
+}
+
+function cabecalho(P) {
+  return `
+    <img class="porta-logo" src="../assets/img/logo-75lab-preto.png" alt="75 LAB" width="57" height="40">
+    ${P.logoCliente ? `<img class="porta-cliente" src="${esc(P.logoCliente)}" alt="${esc(P.cliente)}">` : `<div class="porta-eyebrow">${esc(P.cliente)}</div>`}
+    <h1>${esc(P.nome)}${P.linha ? ` <b>${esc(P.linha)}</b>` : ''}</h1>`;
+}
+
+function telaForaDoAr(tela, P) {
+  tela.innerHTML = `
+    <div class="porta-card">
+      ${cabecalho(P)}
+      <div class="fora-do-ar"><span class="fora-dot"></span>Página fora do ar</div>
+      <p class="porta-txt">Esta página foi desativada pela 75 LAB e não está recebendo registros de instalação.</p>
+      <p class="lgpd">Precisa montar esta peça? Fale com o responsável pela instalação ou com a 75 LAB: <a href="tel:+551150267313">11 5026-7313</a>.</p>
+    </div>`;
+  document.title = `Fora do ar · ${P.nome}`;
+}
+
 export async function exigirSenha(P) {
   const chave = chaveAcesso(P.slug);
+  const status = paginaNoAr(P.slug); // começa já, em paralelo
+  const tela = document.createElement('div');
+  tela.className = 'porta';
+
   const salvo = ler(chave);
   if (salvo) {
+    if ((await status) === false) {
+      document.body.appendChild(tela);
+      telaForaDoAr(tela, P);
+      return new Promise(() => {});
+    }
     try {
       if (await conferir(P.slug, salvo)) return salvo;
       gravar(chave, null); // senha trocada no painel
@@ -36,13 +75,9 @@ export async function exigirSenha(P) {
   }
 
   return new Promise((resolve) => {
-    const tela = document.createElement('div');
-    tela.className = 'porta';
     tela.innerHTML = `
       <form class="porta-card" novalidate>
-        <img class="porta-logo" src="../assets/img/logo-75lab-preto.png" alt="75 LAB" width="57" height="40">
-        ${P.logoCliente ? `<img class="porta-cliente" src="${esc(P.logoCliente)}" alt="${esc(P.cliente)}">` : `<div class="porta-eyebrow">${esc(P.cliente)}</div>`}
-        <h1>${esc(P.nome)}${P.linha ? ` <b>${esc(P.linha)}</b>` : ''}</h1>
+        ${cabecalho(P)}
         <p class="porta-txt">Digite a <b>senha de acesso</b> para ver a montagem e registrar a instalação.</p>
         <label class="campo"><span>Senha de acesso</span>
           <span class="senha-box">
@@ -55,6 +90,7 @@ export async function exigirSenha(P) {
         <p class="lgpd">Não recebeu a senha? Peça ao responsável pela instalação ou fale com a 75 LAB: <a href="tel:+551150267313">11 5026-7313</a>.</p>
       </form>`;
     document.body.appendChild(tela);
+    status.then((noAr) => { if (noAr === false) telaForaDoAr(tela, P); });
 
     const form = $('form', tela);
     const input = form.senha;
@@ -62,7 +98,7 @@ export async function exigirSenha(P) {
     const botao = $('.enviar', tela);
     const mostrar = $('.mostrar', tela);
     let tentativas = 0;
-    setTimeout(() => input.focus(), 250);
+    setTimeout(() => input.isConnected && input.focus(), 250);
 
     mostrar.addEventListener('click', () => {
       const ver = input.type === 'password';
@@ -87,6 +123,7 @@ export async function exigirSenha(P) {
           tela.remove();
           return resolve(hash);
         }
+        if ((await paginaNoAr(P.slug)) === false) return telaForaDoAr(tela, P);
         tentativas++;
         input.setAttribute('aria-invalid', 'true');
         input.select();

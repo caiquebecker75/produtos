@@ -53,11 +53,13 @@ $('#sair').addEventListener('click', () => A.signOut(auth));
 
 let pararLeitura = null;
 let pararSenhas = null;
+let pararPaginas = null;
 let usuarioEmail = '';
 A.onAuthStateChanged(auth, async (user) => {
   pararLeitura?.();
   pararSenhas?.();
-  pararLeitura = pararSenhas = null;
+  pararPaginas?.();
+  pararLeitura = pararSenhas = pararPaginas = null;
   if (!user) return telas('login');
   if (!user.email?.toLowerCase().endsWith(DOMINIO) || !user.emailVerified) {
     await A.signOut(auth);
@@ -75,6 +77,7 @@ A.onAuthStateChanged(auth, async (user) => {
 let registros = [];
 let catalogo = [];
 let mapa, camada;
+let paginas = {};         // slug → { ativo, atualizadoEm, atualizadoPor }
 let senhas = {};          // slug → { senha, atualizadoEm, atualizadoPor }
 let editando = null;      // slug com o campo de senha aberto
 let rascunho = '';
@@ -82,6 +85,10 @@ const visiveis = new Set();
 
 async function iniciar() {
   try { catalogo = await (await fetch('../projetos.json', { cache: 'no-store' })).json(); } catch { catalogo = []; }
+  pararPaginas = F.onSnapshot(F.collection(db, 'paginas'), (snap) => {
+    paginas = Object.fromEntries(snap.docs.map((d) => [d.id, d.data()]));
+    if (!editando) desenhar();
+  }, (e) => console.error(e));
   pararSenhas = F.onSnapshot(F.collection(db, 'senhas'), (snap) => {
     senhas = Object.fromEntries(snap.docs.map((d) => [d.id, d.data()]));
     if (!editando) desenhar();
@@ -168,17 +175,18 @@ function desenhar() {
   const base = filtrados({ ignorarProjeto: true });
   const cont = {};
   base.forEach((r) => { cont[r.projeto] = (cont[r.projeto] || 0) + 1; });
-  const slugs = [...new Set([...catalogo.map((p) => p.slug), ...Object.keys(cont), ...Object.keys(senhas)])].sort((a, b) => (cont[b] || 0) - (cont[a] || 0) || nomeProjeto(a).nome.localeCompare(nomeProjeto(b).nome, 'pt-BR'));
+  const slugs = [...new Set([...catalogo.map((p) => p.slug), ...Object.keys(cont), ...Object.keys(senhas), ...Object.keys(paginas)])].sort((a, b) => (cont[b] || 0) - (cont[a] || 0) || nomeProjeto(a).nome.localeCompare(nomeProjeto(b).nome, 'pt-BR'));
   const max = Math.max(1, ...Object.values(cont));
   const sel = $('#f-projeto').value;
   $('#lista-projetos').innerHTML = slugs.map((s) => {
     const p = nomeProjeto(s);
     const n = cont[s] || 0;
-    return `<li class="${s === sel ? 'sel' : ''}">
+    return `<li class="${s === sel ? 'sel' : ''} ${paginas[s]?.ativo === false ? 'off' : ''}">
       <span class="pn">${htmlMarcador(estiloProjeto(s, catalogo), 22)}${esc(p.nome)}</span><span class="pq">${n}</span>
       <span class="pc">${esc(p.cliente)}</span>
       <span class="pbar"><i style="width:${(n / max) * 100}%"></i></span>
       <span class="plinks"><a href="#" data-filtrar="${esc(s)}">Filtrar</a><a href="${BASE_PAGINAS}${encodeURIComponent(s)}/" target="_blank" rel="noopener">Página</a><a href="qr.html?p=${encodeURIComponent(s)}" target="_blank" rel="noopener">Etiqueta QR</a></span>
+      ${linhaStatus(s)}
       ${linhaSenha(s)}
     </li>`;
   }).join('') || '<li class="pc">Nenhum projeto ainda.</li>';
@@ -351,5 +359,38 @@ $('#lista-projetos').addEventListener('submit', async (e) => {
     console.error(err);
     toast('Não foi possível salvar a senha.');
     form.querySelectorAll('button, input').forEach((el) => { el.disabled = false; });
+  }
+});
+
+// ---------------------------------------------------------------- página no ar / fora do ar
+function linhaStatus(slug) {
+  const p = paginas[slug];
+  const off = p?.ativo === false;
+  const quando = p?.atualizadoEm?.toDate?.().toLocaleDateString('pt-BR') || '';
+  return `<div class="pstatus ${off ? 'off' : ''}">
+    <span class="estado"><i></i>${off ? 'Fora do ar' : 'No ar'}</span>
+    <button type="button" class="btn-mini ${off ? 'lime' : 'escuro'}" data-status="${esc(slug)}">${off ? 'Colocar no ar' : 'Tirar do ar'}</button>
+    ${quando ? `<small>${off ? 'tirada do ar' : 'recolocada no ar'} em ${quando}${p.atualizadoPor ? ` por ${esc(p.atualizadoPor.split('@')[0])}` : ''}</small>` : ''}
+  </div>`;
+}
+
+$('#lista-projetos').addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-status]');
+  if (!b) return;
+  const slug = b.dataset.status;
+  const tirar = paginas[slug]?.ativo !== false;
+  const nome = nomeProjeto(slug).nome;
+  const msg = tirar
+    ? `Tirar "${nome}" do ar?\n\nQuem abrir o link ou escanear o QR vai ver "Página fora do ar" e nenhum registro de instalação será aceito.`
+    : `Colocar "${nome}" no ar de novo?\n\nA página volta a abrir com a senha atual.`;
+  if (!confirm(msg)) return;
+  b.disabled = true;
+  try {
+    await F.setDoc(F.doc(db, 'paginas', slug), { ativo: !tirar, atualizadoEm: F.serverTimestamp(), atualizadoPor: usuarioEmail });
+    toast(tirar ? 'Página fora do ar.' : 'Página no ar de novo.');
+  } catch (err) {
+    console.error(err);
+    toast('Não foi possível mudar o status da página.');
+    b.disabled = false;
   }
 });
