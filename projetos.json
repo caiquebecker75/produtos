@@ -76,6 +76,10 @@
       {
         "id": "precificadores",
         "nome": "Precificadores"
+      },
+      {
+        "id": "flex",
+        "nome": "Display Flex"
       }
     ]
   },

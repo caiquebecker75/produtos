@@ -147,11 +147,14 @@ function montagem(X, pre, nav) {
   </section>`;
 }
 
+// aceita um vídeo ou uma lista (ex.: montagem + curiosidade na mesma peça)
 function video(X, pre, nav) {
-  const v = X.video;
-  if (!v || !(v.mp4 || v.youtube || v.pendente)) return '';
-  const id = `${pre}video`;
-  nav(id, 'Vídeo');
+  const lista = (Array.isArray(X.video) ? X.video : [X.video]).filter((v) => v && (v.mp4 || v.youtube || v.pendente));
+  return lista.map((v, i) => umVideo(v, `${pre}video${i ? i + 1 : ''}`, nav)).join('');
+}
+
+function umVideo(v, id, nav) {
+  nav(id, v.menu || 'Vídeo');
   const vert = v.orientacao === 'vertical';
   const player = v.pendente
     ? `<div style="position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:24px;color:#9AA08F;font-size:14px;background:#1B201D">${v.poster ? `<img src="${esc(v.poster)}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.35">` : ''}<span style="position:relative">${md(v.pendente)}</span></div>`
@@ -164,8 +167,8 @@ function video(X, pre, nav) {
       <div class="video-box ${vert ? 'vert' : ''}">
         <div class="player ${vert ? 'v' : 'h'}">${player}</div>
         <div class="video-info">
-          <div class="eyebrow">Vídeo de montagem</div>
-          <h2 class="h2">Veja <b>passo a passo</b></h2>
+          <div class="eyebrow">${esc(v.eyebrow || 'Vídeo de montagem')}</div>
+          <h2 class="h2">${v.titulo ? md(v.titulo) : 'Veja <b>passo a passo</b>'}</h2>
           <p class="lead">${md(v.texto || 'Assista antes de abrir a embalagem: a montagem fica mais rápida e sem retrabalho.')}</p>
           ${v.duracao ? `<p class="dur">Duração ${esc(v.duracao)}</p>` : ''}
           ${v.capitulos?.length && v.mp4 ? `<ol class="capitulos">${v.capitulos.map((c) => `<li><button type="button" data-t="${Number(c.t) || 0}"><span>${Math.floor(c.t / 60)}:${String(Math.floor(c.t % 60)).padStart(2, '0')}</span>${esc(c.titulo)}</button></li>`).join('')}</ol>` : ''}
