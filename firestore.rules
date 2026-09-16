@@ -95,7 +95,12 @@ service cloud.firestore {
     match /instalacoes/{id} {
       allow create: if request.resource.data.keys().hasOnly([
             'projeto', 'projetoNome', 'cliente', 'nome', 'telefone', 'loja',
+            'bandeira', 'tipoPromotor', 'temFoto',
             'geo', 'geoStatus', 'origem', 'aparelho', 'senhaHash', 'pecas', 'criadoEm'])
+        // rede e tipo de promotor (16/09): opcionais para aparelhos com a página antiga em cache
+        && (!('bandeira' in request.resource.data) || texto(request.resource.data.bandeira, 2, 60))
+        && (!('tipoPromotor' in request.resource.data) || request.resource.data.tipoPromotor in ['proprio', 'compartilhado'])
+        && (!('temFoto' in request.resource.data) || request.resource.data.temFoto is bool)
         && slugValido(request.resource.data.projeto)
         && texto(request.resource.data.projetoNome, 0, 140)
         && texto(request.resource.data.cliente, 0, 100)
@@ -118,6 +123,19 @@ service cloud.firestore {
           || senhaConfere(request.resource.data.projeto, request.resource.data.get('senhaHash', '')));
 
       allow read, update, delete: if equipe75();
+    }
+
+    // foto da fachada (16/09): um documento por instalação, com o mesmo id, criado logo depois do registro.
+    // Só entra se a instalação existe, é recente e ainda não tem foto; ninguém de fora lê nem troca.
+    match /fotos/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['img', 'criadoEm'])
+        && request.resource.data.img is string
+        && request.resource.data.img.size() < 900000
+        && request.resource.data.img.matches('^data:image/jpeg;base64,[A-Za-z0-9+/=]+$')
+        && request.resource.data.criadoEm == request.time
+        && exists(/databases/$(database)/documents/instalacoes/$(id))
+        && get(/databases/$(database)/documents/instalacoes/$(id)).data.criadoEm > request.time - duration.value(30, 'm');
+      allow read, delete: if equipe75();
     }
 
     match /{doc=**} {

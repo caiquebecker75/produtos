@@ -10,6 +10,7 @@ const ler = (k) => { try { return JSON.parse(localStorage.getItem(k) || 'null');
 const gravar = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 
 const X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>';
+const CAM = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z"/><circle cx="12" cy="13.5" r="3.5"/></svg>';
 const PIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
 
 // ---------- localização ----------
@@ -52,6 +53,26 @@ function desenharGeo() {
   el.innerHTML = `<span class="dot">${PIN}</span><span>${txt}</span>${tentar}`;
   $('#reg-geo-tentar')?.addEventListener('click', pedirLocalizacao);
 }
+
+// ---------- foto da fachada ----------
+// reduz no próprio celular (lado maior 1080 px, JPEG): cabe num documento do Firestore e sobe rápido com sinal fraco
+async function comprimirFoto(arquivo) {
+  const url = URL.createObjectURL(arquivo);
+  try {
+    const img = await new Promise((ok, falha) => { const i = new Image(); i.onload = () => ok(i); i.onerror = falha; i.src = url; });
+    const lado = 1080, esc = Math.min(1, lado / Math.max(img.naturalWidth, img.naturalHeight));
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.naturalWidth * esc); c.height = Math.round(img.naturalHeight * esc);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    for (const q of [0.72, 0.6, 0.48, 0.36]) {
+      const dado = c.toDataURL('image/jpeg', q);
+      if (dado.length < 850000) return dado;
+    }
+    throw new Error('foto grande demais');
+  } finally { URL.revokeObjectURL(url); }
+}
+
+const BANDEIRAS = ['Assaí', 'Atacadão', 'Carrefour', 'Carrefour Bairro', 'Pão de Açúcar', 'Extra', 'Dia', 'Sam\'s Club', 'Makro', 'Tenda Atacado', 'Roldão', 'Spani', 'Mart Minas', 'BH Supermercados', 'Savegnago', 'Condor', 'Muffato', 'Zaffari', 'Angeloni', 'GBarbosa', 'Mateus', 'Hirota', 'St Marche', 'Oba Hortifruti', 'Petz', 'Cobasi', 'Petlove', 'Casas Bahia', 'Magazine Luiza', 'Fast Shop', 'Leroy Merlin', 'Drogasil', 'Droga Raia', 'Pague Menos'];
 
 // ---------- telefone ----------
 const soDigitos = (s) => s.replace(/\D/g, '').slice(0, 11);
@@ -124,7 +145,23 @@ export function iniciarRegistro(P, { toast, ICON, senhaHash, pecas = () => [], n
           ${nomes.length ? `<div class="reg-pecas"><span>Peças: <b>${esc(nomes.join(', '))}</b></span>${trocarPecas ? '<button type="button" class="link-btn" data-reg-trocar>Trocar</button>' : ''}</div>` : ''}
           <label class="campo"><span>Seu nome</span><input name="nome" autocomplete="name" required minlength="2" maxlength="80" value="${esc(pessoa.nome || '')}" placeholder="Nome e sobrenome"></label>
           <label class="campo"><span>Telefone (WhatsApp)</span><input name="telefone" type="tel" inputmode="tel" autocomplete="tel-national" required value="${esc(mascara(soDigitos(pessoa.telefone || '')))}" placeholder="(11) 91234-5678"></label>
-          <label class="campo"><span>Loja onde está instalando</span><input name="loja" autocomplete="organization" required minlength="2" maxlength="140" placeholder="Rede e unidade. Ex.: Carrefour Pinheiros"></label>
+          <fieldset class="campo escolha"><span>Você é promotor</span>
+            <div class="opcoes">
+              <label><input type="radio" name="tipoPromotor" value="proprio" ${pessoa.tipoPromotor === 'proprio' ? 'checked' : ''}><span><b>Próprio</b><small>Só desta marca</small></span></label>
+              <label><input type="radio" name="tipoPromotor" value="compartilhado" ${pessoa.tipoPromotor === 'compartilhado' ? 'checked' : ''}><span><b>Compartilhado</b><small>Agência, atende várias marcas</small></span></label>
+            </div>
+          </fieldset>
+          <label class="campo"><span>Rede (bandeira)</span><input name="bandeira" list="reg-bandeiras" autocomplete="off" required minlength="2" maxlength="60" placeholder="Ex.: Carrefour"></label>
+          <datalist id="reg-bandeiras">${BANDEIRAS.map((b) => `<option value="${esc(b)}">`).join('')}</datalist>
+          <label class="campo"><span>Loja (unidade)</span><input name="loja" autocomplete="organization" required minlength="2" maxlength="140" placeholder="Ex.: Carrefour Pinheiros"></label>
+          <div class="campo foto-fachada">
+            <span>Foto da fachada da loja</span>
+            <label class="foto-box" id="reg-foto-box">
+              <input type="file" name="foto" accept="image/*" capture="environment">
+              <span class="foto-vazio">${CAM}<b>Tirar foto da fachada</b><small>De frente, com o nome da loja aparecendo</small></span>
+              <img alt="Foto da fachada" hidden>
+            </label>
+          </div>
           <div class="geo" id="reg-geo" aria-live="polite"></div>
           <p class="erro-msg" id="reg-erro" hidden></p>
           <button class="enviar" type="submit">Registrar instalação</button>
@@ -150,7 +187,26 @@ export function iniciarRegistro(P, { toast, ICON, senhaHash, pecas = () => [], n
       await trocarPecas();
       abrir(modo);
     });
-    setTimeout(() => (pessoa.nome ? form.loja : form.nome).focus({ preventScroll: true }), 350);
+    setTimeout(() => (pessoa.nome ? form.bandeira : form.nome).focus({ preventScroll: true }), 350);
+
+    // foto da fachada: comprime assim que tira, mostra a prévia e guarda pronta para o envio
+    let foto = null;
+    form.foto.addEventListener('change', async () => {
+      const arq = form.foto.files?.[0];
+      const box = $('#reg-foto-box', bg);
+      if (!arq) return;
+      box.dataset.estado = 'lendo';
+      try {
+        foto = await comprimirFoto(arq);
+        const img = $('img', box);
+        img.src = foto; img.hidden = false;
+        box.dataset.estado = 'ok';
+      } catch (e) {
+        console.error(e);
+        foto = null;
+        box.dataset.estado = 'erro';
+      }
+    });
 
     form.addEventListener('submit', async (ev) => {
       ev.preventDefault();
@@ -158,10 +214,15 @@ export function iniciarRegistro(P, { toast, ICON, senhaHash, pecas = () => [], n
       const nome = form.nome.value.trim().replace(/\s+/g, ' ');
       const telefone = soDigitos(tel.value);
       const loja = form.loja.value.trim().replace(/\s+/g, ' ');
+      const bandeira = form.bandeira.value.trim().replace(/\s+/g, ' ');
+      const tipoPromotor = form.tipoPromotor.value;
       const invalidos = [];
       form.nome.setAttribute('aria-invalid', String(nome.length < 2)); if (nome.length < 2) invalidos.push('seu nome');
       tel.setAttribute('aria-invalid', String(telefone.length < 10)); if (telefone.length < 10) invalidos.push('o telefone com DDD');
+      $('.escolha', form).setAttribute('aria-invalid', String(!tipoPromotor)); if (!tipoPromotor) invalidos.push('se você é promotor próprio ou compartilhado');
+      form.bandeira.setAttribute('aria-invalid', String(bandeira.length < 2)); if (bandeira.length < 2) invalidos.push('a rede');
       form.loja.setAttribute('aria-invalid', String(loja.length < 2)); if (loja.length < 2) invalidos.push('a loja');
+      $('#reg-foto-box', bg).setAttribute('aria-invalid', String(!foto)); if (!foto) invalidos.push('a foto da fachada');
       if (invalidos.length) {
         erro.textContent = `Preencha ${invalidos.join(', ')}.`;
         erro.hidden = false;
@@ -188,17 +249,20 @@ export function iniciarRegistro(P, { toast, ICON, senhaHash, pecas = () => [], n
         return;
       }
       enviar.textContent = 'Enviando…';
-      gravar('reg75:pessoa', { nome, telefone });
+      gravar('reg75:pessoa', { nome, telefone, tipoPromotor });
       const lista = pecas();
       try {
         const { fs, db: base } = await db();
-        await fs.addDoc(fs.collection(base, 'instalacoes'), {
+        const ref = await fs.addDoc(fs.collection(base, 'instalacoes'), {
           projeto: P.slug,
           projetoNome: `${P.nome} ${P.linha || ''}`.trim().slice(0, 140),
           cliente: String(P.cliente || '').slice(0, 100),
           nome,
           telefone,
           loja,
+          bandeira,
+          tipoPromotor,
+          temFoto: true,
           geo: geo.pos,
           geoStatus: geo.estado === 'buscando' ? 'tempo' : geo.estado,
           origem: veioDoQR ? 'qr' : 'link',
@@ -207,6 +271,12 @@ export function iniciarRegistro(P, { toast, ICON, senhaHash, pecas = () => [], n
           ...(lista.length ? { pecas: lista } : {}),
           criadoEm: fs.serverTimestamp(),
         });
+        // foto em documento à parte (fotos/{id da instalação}): a lista do painel continua leve
+        enviar.textContent = 'Enviando a foto…';
+        for (let t = 0; t < 3; t++) {
+          try { await fs.setDoc(fs.doc(base, 'fotos', ref.id), { img: foto, criadoEm: fs.serverTimestamp() }); break; }
+          catch (e) { console.error(e); await new Promise((r) => setTimeout(r, 1500 * (t + 1))); }
+        }
         gravar(chaveReg, { loja, quando: Date.now(), pecas: lista });
         if (veioDoQR) {
           const u = new URL(location.href);

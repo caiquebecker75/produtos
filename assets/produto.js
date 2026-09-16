@@ -3,7 +3,7 @@
 // — depois da senha, a pessoa escolhe as peças que vai executar e a página mostra só essas
 // (o registro de instalação guarda quais foram). Blocos sem dados simplesmente não aparecem.
 // Texto aceita **negrito**. Ver modelo/index.html para os campos.
-import { iniciarRegistro } from './registro.js?v=9';
+import { iniciarRegistro } from './registro.js?v=10';
 import { exigirSenha, pecasDesligadas, telaSemPecas } from './acesso.js?v=4';
 import { escolherPecas } from './selecao.js?v=2';
 
