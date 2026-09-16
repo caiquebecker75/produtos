@@ -1,5 +1,75 @@
 [
   {
+    "slug": "semp-enxoval-ar-condicionado",
+    "cliente": "SEMP",
+    "nome": "Enxoval SEMP Split HW",
+    "cor": "#7A4DFF",
+    "sigla": "EP",
+    "criado": "2026-09-16",
+    "pecas": [
+      {
+        "id": "ilha",
+        "nome": "Ilha Premium"
+      },
+      {
+        "id": "portico",
+        "nome": "Pórtico"
+      },
+      {
+        "id": "backdrop",
+        "nome": "Backdrop"
+      },
+      {
+        "id": "cubo",
+        "nome": "Cubos"
+      },
+      {
+        "id": "poster-cinta",
+        "nome": "Poster e cinta de caixa"
+      },
+      {
+        "id": "berco",
+        "nome": "Display berço"
+      },
+      {
+        "id": "regua",
+        "nome": "Régua de argumentação"
+      },
+      {
+        "id": "placa",
+        "nome": "Placa de features e guia de BTU"
+      },
+      {
+        "id": "topper",
+        "nome": "Topper"
+      },
+      {
+        "id": "orelha",
+        "nome": "Orelha"
+      },
+      {
+        "id": "tapete",
+        "nome": "Tapete de piso"
+      },
+      {
+        "id": "aerea",
+        "nome": "Comunicação aérea"
+      },
+      {
+        "id": "lama",
+        "nome": "Lamá"
+      },
+      {
+        "id": "poster-caixa",
+        "nome": "Poster de caixa"
+      },
+      {
+        "id": "testeira",
+        "nome": "Testeira"
+      }
+    ]
+  },
+  {
     "slug": "agricola-famosa-mpdv-melao",
     "cliente": "Agrícola Famosa",
     "nome": "MPDV Melão Famosa",
