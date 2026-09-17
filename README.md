@@ -17,6 +17,7 @@ Publicado no GitHub Pages: `https://projetos.75lab.com.br/produtos/<pasta>/` · 
 |---|---|
 | `modelo/` | Página modelo com todos os blocos (use para testar o registro) |
 | `savencia-display-pp-polenguinho/` | Savencia · Display PP Polenguinho |
+| `scala-queijos-scala-flow/` | Queijos Scala · Gravitacional Scala Flow (4 configurações: modelo 1 com 1 ou 3 módulos, modelo 2 com 1 ou 2 módulos), acesso livre |
 | `savencia-enxoval-frescatino/` | Savencia · Enxoval Frescatino (5 peças: display, wobbler, gravitacional, frame, clipstrip) |
 
 ## Criar a página de uma peça nova

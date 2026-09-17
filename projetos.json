@@ -1,5 +1,31 @@
 [
   {
+    "slug": "scala-queijos-scala-flow",
+    "cliente": "Queijos Scala",
+    "nome": "Scala Flow · Display Gravitacional",
+    "cor": "#BE1E28",
+    "sigla": "SF",
+    "criado": "2026-09-17",
+    "pecas": [
+      {
+        "id": "m1-1",
+        "nome": "Modelo 1 · 1 módulo"
+      },
+      {
+        "id": "m1-3",
+        "nome": "Modelo 1 · 3 módulos"
+      },
+      {
+        "id": "m2-1",
+        "nome": "Modelo 2 · 1 módulo"
+      },
+      {
+        "id": "m2-2",
+        "nome": "Modelo 2 · 2 módulos"
+      }
+    ]
+  },
+  {
     "slug": "semp-enxoval-ar-condicionado",
     "cliente": "SEMP",
     "nome": "Enxoval SEMP Split HW",
