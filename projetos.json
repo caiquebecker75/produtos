@@ -1,5 +1,13 @@
 [
   {
+    "slug": "panasonic-modulo-lavanderia",
+    "cliente": "Panasonic",
+    "nome": "Módulo de Lavanderia",
+    "cor": "#FFC400",
+    "sigla": "ML",
+    "criado": "2026-09-22"
+  },
+  {
     "slug": "scala-queijos-scala-flow",
     "cliente": "Queijos Scala",
     "nome": "Scala Flow · Display Gravitacional",

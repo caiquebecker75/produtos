@@ -31,11 +31,14 @@ if (linha.length > 11 && linha.includes(' ')) {
   linhas = [linha.slice(0, corte), linha.slice(corte + 1)];
 }
 const sobe = (linhas.length - 1) * 85;
+// nome comprido (ex.: MÓDULO DE LAVANDERIA) invadia o render: o corpo encolhe até caber antes da imagem
+const nomeTxt = String(P.nome || '').toUpperCase();
+const corpoNome = nomeTxt.length <= 13 ? 82 : nomeTxt.length <= 16 ? 66 : nomeTxt.length <= 20 ? 50 : 42;
 camadas.push({
   input: Buffer.from(`<svg width="${W}" height="${H}">
     <style>.a{font-family:'Anton','Impact',sans-serif}.l{font-family:'Lexend','Helvetica Neue',Arial,sans-serif}</style>
     <text x="72" y="${250 - sobe}" class="a" font-size="24" letter-spacing="4" fill="#54594E">${esc(String(P.cliente).toUpperCase())}</text>
-    <text x="72" y="${340 - sobe}" class="l" font-size="82" font-weight="200" fill="#0E1110">${esc(String(P.nome).toUpperCase())}</text>
+    <text x="72" y="${340 - sobe}" class="l" font-size="${corpoNome}" font-weight="200" fill="#0E1110">${esc(String(P.nome).toUpperCase())}</text>
     ${linhas.map((t, i) => `<text x="72" y="${425 - sobe + i * 85}" class="l" font-size="82" font-weight="600" fill="#0E1110">${esc(t)}</text>`).join('')}
     <rect x="72" y="486" width="370" height="58" rx="29" fill="#0E1110"/>
     <text x="257" y="524" text-anchor="middle" class="a" font-size="22" letter-spacing="3" fill="#C0EE4E">TREINAMENTO DE MONTAGEM</text>
