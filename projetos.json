@@ -184,6 +184,10 @@
       {
         "id": "flex",
         "nome": "Display Flex"
+      },
+      {
+        "id": "polionda",
+        "nome": "Display Polionda"
       }
     ]
   },
