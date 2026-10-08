@@ -11,10 +11,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Lexend:wght@200;300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="painel.css?v=8">
+<link rel="stylesheet" href="painel.css?v=9">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script defer src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-<script type="module" src="painel.js?v=8"></script>
+<script type="module" src="painel.js?v=9"></script>
 </head>
 <body>
 
@@ -64,20 +64,24 @@
       </div>
     </section>
 
-    <section class="kpis" aria-label="Resumo">
-      <div class="kpi escuro"><small>Registros</small><b id="k-total">0</b></div>
-      <div class="kpi"><small>Lojas</small><b id="k-lojas">0</b></div>
-      <div class="kpi"><small>Promotores</small><b id="k-pessoas">0</b></div>
-      <div class="kpi"><small>Com localização</small><b id="k-geo">0%</b></div>
-    </section>
-
     <section class="card intel">
       <div class="card-top">
         <h2>Inteligência de PDV</h2>
         <span class="dica"><span id="intel-dica"></span> <em id="intel-geo"></em></span>
       </div>
-      <div class="kpis intel-kpis" id="intel-kpis"></div>
-      <div class="intel-cols">
+
+      <div class="bignums" id="intel-bn"></div>
+      <div class="insights" id="intel-insights"></div>
+
+      <div class="intel-bloco mt">
+        <div class="intel-top"><h3>Ritmo de execução</h3><span class="dica" id="intel-ritmo-dica"></span></div>
+        <div class="ritmo-cx">
+          <div id="intel-ritmo"></div>
+          <div class="ritmo-leg"><span><i class="q lime"></i>registros do dia</span><span><i class="q escura"></i>lojas positivadas acumuladas</span></div>
+        </div>
+      </div>
+
+      <div class="intel-cols mt">
         <div class="intel-bloco">
           <div class="intel-top">
             <h3>Positivação por</h3>
@@ -89,17 +93,42 @@
               <button type="button" class="aba" data-recorte="promotor">Promotor</button>
             </div>
           </div>
-          <div class="tabela-wrap"><table class="tabela intel-tabela" id="intel-tabela"></table></div>
+          <div id="intel-barras"></div>
+          <details class="detalhe">
+            <summary>Ver a tabela completa</summary>
+            <div class="tabela-wrap"><table class="tabela intel-tabela" id="intel-tabela"></table></div>
+          </details>
         </div>
         <div class="intel-bloco">
           <h3>Promotor próprio e compartilhado</h3>
+          <div id="intel-donut"></div>
           <div class="tipos" id="intel-tipos"></div>
-          <h3 class="mt">Ritmo dos últimos 30 dias</h3>
-          <div class="ritmo" id="intel-ritmo"></div>
         </div>
       </div>
-      <div class="intel-bloco">
-        <div class="intel-top"><h3>Fachadas registradas</h3><span class="dica" id="intel-fachadas-dica"></span></div>
+
+      <div class="intel-cols mt">
+        <div class="intel-bloco">
+          <h3>Do QR à loja auditada</h3>
+          <div id="intel-funil"></div>
+        </div>
+        <div class="intel-bloco">
+          <h3>Quando o campo acontece</h3>
+          <div id="intel-heat"></div>
+          <p class="dica mt-s">Registros por dia da semana e faixa de horário.</p>
+        </div>
+      </div>
+
+      <div class="intel-bloco mt">
+        <div class="intel-top"><h3>Rede × projeto</h3><span class="dica">Lojas positivadas em cada cruzamento</span></div>
+        <div id="intel-matriz"></div>
+      </div>
+
+      <div class="intel-bloco fachadas-bloco mt" id="intel-fachadas-bloco" data-aberto="0">
+        <div class="intel-top">
+          <h3>Fachadas registradas</h3>
+          <span class="dica" id="intel-fachadas-dica"></span>
+          <button type="button" class="btn-min" id="intel-fachadas-abrir" aria-expanded="false">Ampliar fotos</button>
+        </div>
         <div class="fachadas" id="intel-fachadas"></div>
       </div>
     </section>

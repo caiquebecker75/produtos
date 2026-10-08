@@ -8,6 +8,8 @@
 // Cidade e estado não vêm no registro: a primeira vez que o painel vê um ponto, ele pergunta ao
 // Nominatim (OpenStreetMap) e grava de volta no documento, então o custo é pago uma vez só.
 
+import * as G from './graficos.js?v=1';
+
 const RAIO_PDV_M = 150;
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const num = (n) => Number(n || 0).toLocaleString('pt-BR');
@@ -26,16 +28,43 @@ const BANDEIRAS = ['Assaí', 'Atacadão', 'Carrefour', 'Pão de Açúcar', 'Extr
   'Magazine Luiza', 'Fast Shop', 'Leroy Merlin', 'Drogasil', 'Droga Raia', 'Pague Menos'];
 const APELIDOS = { crf: 'Carrefour', gpa: 'Pão de Açúcar', pda: 'Pão de Açúcar', atacadao: 'Atacadão', assai: 'Assaí', cenu: 'CENU' };
 
-export function bandeiraDe(r) {
-  if (r.bandeira?.trim()) return r.bandeira.trim();
-  const loja = normalizar(r.loja);
-  const primeira = loja.split(' ')[0];
-  if (APELIDOS[primeira]) return APELIDOS[primeira];
+/** Distância de edição, para juntar o que o promotor digitou errado ("Carreforu" é Carrefour). */
+function perto(a, b) {
+  if (Math.abs(a.length - b.length) > 2) return 99;
+  let linha = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const nova = [i];
+    for (let j = 1; j <= b.length; j++) {
+      nova[j] = Math.min(linha[j] + 1, nova[j - 1] + 1, linha[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    linha = nova;
+  }
+  return linha[b.length];
+}
+
+const capitalizar = (s) => String(s).replace(/\S+/g, (p) => (p.length <= 2 ? p.toLowerCase() : p[0].toUpperCase() + p.slice(1).toLowerCase()));
+
+/** Texto livre vira rede conhecida: apelido, nome inteiro, começo do nome ou erro de digitação. */
+function redeConhecida(texto) {
+  const t = normalizar(texto);
+  if (!t) return null;
+  const primeira = t.split(' ')[0];
+  if (APELIDOS[t] || APELIDOS[primeira]) return APELIDOS[t] || APELIDOS[primeira];
   for (const b of BANDEIRAS) {
     const nb = normalizar(b);
-    if (nb && (loja === nb || loja.startsWith(`${nb} `))) return b;
+    if (!nb) continue;
+    if (t === nb || t.startsWith(`${nb} `) || (primeira.length >= 3 && nb.startsWith(primeira))) return b;
   }
-  return 'Não informada';
+  for (const b of BANDEIRAS) {
+    if (perto(primeira, normalizar(b).split(' ')[0]) <= 2 && primeira.length >= 4) return b;
+  }
+  return null;
+}
+
+export function bandeiraDe(r) {
+  const digitada = r.bandeira?.trim();
+  if (digitada) return redeConhecida(digitada) || capitalizar(digitada);
+  return redeConhecida(r.loja) || 'Não informada';
 }
 
 /** Agrupa registros em pontos de venda: até 150 m é a mesma loja; sem GPS, agrupa pelo nome. */
@@ -60,7 +89,7 @@ export function agruparPontos(registros) {
     }
     alvo.registros.push(r);
     alvo.nomes.set(r.loja, (alvo.nomes.get(r.loja) || 0) + 1);
-    if (r.bandeira) alvo.bandeira = r.bandeira;
+    if (r.bandeira) alvo.bandeira = bandeiraDe(r);
     if (r.cidade) { alvo.cidade = r.cidade; alvo.uf = r.uf; }
     pontoDe.set(r.id, alvo.id);
   }
@@ -108,12 +137,54 @@ export function calcular(lista, todos) {
     };
   }).filter((x) => x.registros);
 
+  // primeira visita de cada loja: serve para o acumulado do ritmo e para o risco de perda
+  const primeiraDoPonto = new Map(pontos.map((p) => [p.id, p.registros[0]?.data?.getTime() || 0]));
+  const ultimaDoPonto = new Map(pontos.map((p) => [p.id, Math.max(...p.registros.map((x) => x.data?.getTime() || 0))]));
+
   const ritmo = Array.from({ length: 30 }, (_, k) => {
     const d0 = new Date(); d0.setHours(0, 0, 0, 0);
     const ini = d0.getTime() - (29 - k) * 864e5;
     const doDia = lista.filter((r) => r.data && r.data.getTime() >= ini && r.data.getTime() < ini + 864e5);
-    return { dia: ini, registros: doDia.length, pdvs: new Set(doDia.map((r) => pontoDe.get(r.id))).size };
+    const novas = [...primeiraDoPonto.values()].filter((t) => t >= ini && t < ini + 864e5).length;
+    return { dia: ini, registros: doDia.length, pdvs: new Set(doDia.map((r) => pontoDe.get(r.id))).size, novas };
   });
+
+  // 30 dias contra os 30 anteriores
+  const janela = (de, ate) => {
+    const g = lista.filter((r) => r.data && r.data.getTime() >= de && r.data.getTime() < ate);
+    const pc = new Set();
+    for (const r of g) for (const x of (r.pecas || [])) pc.add(`${pontoDe.get(r.id)}|${r.projeto}|${x}`);
+    return { registros: g.length, pdvs: new Set(g.map((r) => pontoDe.get(r.id))).size, pecas: pc.size,
+             promotores: new Set(g.map((r) => r.telefone)).size };
+  };
+  const agora30 = janela(agora - 30 * 864e5, agora + 864e5);
+  const antes30 = janela(agora - 60 * 864e5, agora - 30 * 864e5);
+  const varia = (a, b) => (b ? ((a - b) / b) * 100 : a ? 100 : null);
+  const variacao = {
+    registros: varia(agora30.registros, antes30.registros),
+    pdvs: varia(agora30.pdvs, antes30.pdvs),
+    pecas: varia(agora30.pecas, antes30.pecas),
+    promotores: varia(agora30.promotores, antes30.promotores),
+  };
+
+  // quando o campo acontece: dia da semana contra faixa de horário
+  const FAIXAS = ['6h', '9h', '12h', '15h', '18h', '21h'];
+  const heat = Array.from({ length: 7 }, () => Array(FAIXAS.length).fill(0));
+  for (const r of lista) {
+    if (!r.data) continue;
+    const h = Math.min(FAIXAS.length - 1, Math.max(0, Math.floor((r.data.getHours() - 6) / 3)));
+    heat[r.data.getDay()][h]++;
+  }
+
+  // lojas paradas: material no ponto sem nenhuma visita nova (prevenção de perda)
+  const paradas = pontos.filter((p) => agora - (ultimaDoPonto.get(p.id) || 0) > 30 * 864e5);
+
+  const pecasPorPonto = new Map();
+  for (const r of lista) {
+    const k = pontoDe.get(r.id);
+    if (!pecasPorPonto.has(k)) pecasPorPonto.set(k, new Set());
+    for (const x of (r.pecas || [])) pecasPorPonto.get(k).add(`${r.projeto}|${x}`);
+  }
 
   const media = (v) => (v.length ? v.reduce((a, b) => a + b, 0) / v.length : null);
   return {
@@ -130,8 +201,50 @@ export function calcular(lista, todos) {
       semGeo: lista.filter((r) => !r.geo).length,
       semCidade: lista.filter((r) => r.geo && !r.cidade).length,
     },
-    porTipo, ritmo,
+    porTipo, ritmo, variacao, heat, faixas: FAIXAS, paradas,
+    janela30: agora30, janela60: antes30,
+    pecasPorPonto, ultimaDoPonto, primeiraDoPonto,
   };
+}
+
+/* ------------------------------------------------------------------ insights */
+
+/** Frases curtas tiradas dos próprios números: o que um gerente leria primeiro. */
+export function insights(r, lista, nomeProjeto) {
+  const s = r.resumo;
+  const fora = [];
+  const linhas = recorte(lista, r.pontoDe, r.pontos, 'bandeira', nomeProjeto);
+  const topo = linhas[0];
+  if (topo && s.pdvs) {
+    fora.push({ n: `${Math.round((topo.pdvs / s.pdvs) * 100)}%`, t: `das lojas positivadas são ${topo.chave}`,
+      sub: `${num(topo.pdvs)} de ${num(s.pdvs)} lojas · ${num(topo.pecas)} peças` });
+  }
+  const proprio = r.porTipo.find((t) => t.tipo === 'proprio');
+  const comp = r.porTipo.find((t) => t.tipo === 'compartilhado');
+  if (proprio && comp && proprio.porDia && comp.porDia) {
+    const vezes = proprio.porDia / comp.porDia;
+    fora.push({ n: `${vezes.toFixed(1)}×`, t: vezes >= 1 ? 'o promotor próprio positiva mais lojas por dia' : 'o promotor compartilhado positiva mais lojas por dia',
+      sub: `${proprio.porDia.toFixed(1)} contra ${comp.porDia.toFixed(1)} loja por dia de campo` });
+  }
+  if (s.pdvs) {
+    const porLoja = s.pecas / s.pdvs;
+    fora.push({ n: porLoja.toFixed(1), t: 'peças por loja, na média', sub: `${num(s.pecas)} peças em ${num(s.pdvs)} lojas` });
+  }
+  const pico = r.heat.flatMap((linha, d) => linha.map((v, h) => ({ v, d, h }))).sort((a, b) => b.v - a.v)[0];
+  if (pico && pico.v) {
+    const dias = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
+    fora.push({ n: r.faixas[pico.h], t: `é o horário de pico, na ${dias[pico.d]}`, sub: `${num(pico.v)} registros nessa janela` });
+  }
+  if (r.paradas.length) {
+    fora.push({ n: num(r.paradas.length), t: 'lojas sem visita há mais de 30 dias', sub: 'material no ponto sem conferência: risco de perda', alerta: true });
+  }
+  if (s.diasPositivacao != null) {
+    fora.push({ n: `${s.diasPositivacao.toFixed(1)} d`, t: 'do começo do projeto até a loja estar positivada', sub: 'média de todas as lojas do filtro' });
+  }
+  if (s.comFoto != null && s.comFoto < 100) {
+    fora.push({ n: pct(s.comFoto), t: 'dos registros têm foto da fachada', sub: s.comFoto < 60 ? 'cobrar a foto fecha a auditoria do PDV' : 'auditoria visual quase completa' });
+  }
+  return fora.slice(0, 6);
 }
 
 /** Linhas do recorte escolhido (bandeira, cidade, estado, projeto ou promotor). */
@@ -178,20 +291,42 @@ const SUB_TIPO = {
 export function desenhar({ lista, todos, qual, nomeProjeto, dataFmt }) {
   const r = calcular(lista, todos);
   const s = r.resumo;
+  const el = (id) => document.querySelector(id);
+  const pintar = (id, html) => { const n = el(id); if (n) n.innerHTML = html; };
 
-  document.querySelector('#intel-kpis').innerHTML = [
-    ['Lojas positivadas', num(s.pdvs), `${num(s.registros)} registros · ${num(s.bandeiras)} redes`, true],
-    ['Peças executadas', num(s.pecas), 'peça por loja, sem repetir'],
-    ['Promotores', num(s.promotores), `${num(s.promotoresSemana)} ativos nos últimos 7 dias`],
-    ['Tempo de positivação', s.diasPositivacao == null ? '–' : `${s.diasPositivacao.toFixed(1)} d`, 'do 1º registro do projeto até a loja'],
-    ['Com foto da fachada', pct(s.comFoto), s.semGeo ? `${num(s.semGeo)} sem localização` : 'todas com localização'],
-  ].map(([t, v, sub, escuro]) => `<div class="kpi ${escuro ? 'escuro' : ''}"><small>${esc(t)}</small><b>${esc(v)}</b><em>${esc(sub)}</em></div>`).join('');
+  /* ---- big numbers */
+  pintar('#intel-bn', G.bigNumbers([
+    { rotulo: 'Lojas positivadas', valor: num(s.pdvs), destaque: true, variacao: r.variacao.pdvs,
+      nota: `${num(s.bandeiras)} redes · ${num(s.registros)} registros` },
+    { rotulo: 'Peças executadas', valor: num(s.pecas), variacao: r.variacao.pecas,
+      nota: s.pdvs ? `${(s.pecas / s.pdvs).toFixed(1)} por loja` : '' },
+    { rotulo: 'Promotores em campo', valor: num(s.promotores), variacao: r.variacao.promotores,
+      nota: `${num(s.promotoresSemana)} ativos nos últimos 7 dias` },
+    { rotulo: 'Tempo de positivação', valor: s.diasPositivacao == null ? '–' : s.diasPositivacao.toFixed(1), unidade: s.diasPositivacao == null ? '' : 'd',
+      nota: 'do início do projeto até a loja' },
+    { rotulo: 'Auditoria com foto', valor: pct(s.comFoto), nota: s.semGeo ? `${num(s.semGeo)} sem localização` : 'todas com localização' },
+  ]));
 
+  /* ---- insights */
+  pintar('#intel-insights', insights(r, lista, nomeProjeto).map((i) => `
+    <article class="insight ${i.alerta ? 'alerta' : ''}">
+      <b>${esc(i.n)}</b><span>${esc(i.t)}</span><small>${esc(i.sub)}</small>
+    </article>`).join(''));
+
+  /* ---- ritmo */
+  pintar('#intel-ritmo', G.areaRitmo(r.ritmo));
+  const novas30 = r.ritmo.reduce((a, d) => a + d.novas, 0);
+  pintar('#intel-ritmo-dica', `${num(r.janela30.registros)} registros · ${num(novas30)} lojas novas em 30 dias`);
+
+  /* ---- recorte escolhido: barras + tabela */
   const linhas = recorte(lista, r.pontoDe, r.pontos, qual, nomeProjeto);
+  const titulos = { bandeira: 'Rede', cidade: 'Cidade', uf: 'Estado', projeto: 'Projeto', promotor: 'Promotor' };
+  pintar('#intel-barras', G.barras(linhas.slice(0, 8).map((l) => ({
+    nome: l.rotulo, valor: l.pdvs, nota: `${num(l.pecas)} peças · ${pct(l.comFoto)} com foto`,
+  })), { sufixo: '' }));
   const maxPdv = Math.max(1, ...linhas.map((l) => l.pdvs));
-  const titulo = { bandeira: 'Rede', cidade: 'Cidade', uf: 'Estado', projeto: 'Projeto', promotor: 'Promotor' }[qual];
-  document.querySelector('#intel-tabela').innerHTML = `
-    <thead><tr><th>${esc(titulo)}</th><th>Lojas</th><th>Peças</th><th>Registros</th><th>Com foto</th><th>Último</th></tr></thead>
+  pintar('#intel-tabela', `
+    <thead><tr><th>${esc(titulos[qual])}</th><th>Lojas</th><th>Peças</th><th>Registros</th><th>Com foto</th><th>Último</th></tr></thead>
     <tbody>${linhas.map((l) => `<tr>
       <td><b>${esc(l.rotulo)}</b>${l.extra ? `<small>${esc(l.extra)}</small>` : ''}
         <span class="barra-mini"><i style="width:${(l.pdvs / maxPdv) * 100}%"></i></span></td>
@@ -200,11 +335,15 @@ export function desenhar({ lista, todos, qual, nomeProjeto, dataFmt }) {
       <td class="n">${num(l.registros)}</td>
       <td class="n">${pct(l.comFoto)}</td>
       <td class="n"><small>${l.ultimo ? esc(dataFmt(new Date(l.ultimo))) : ''}</small></td>
-    </tr>`).join('') || '<tr><td colspan="6" class="vazio-td">Nenhum registro neste filtro.</td></tr>'}</tbody>`;
+    </tr>`).join('') || '<tr><td colspan="6" class="vazio-td">Nenhum registro neste filtro.</td></tr>'}</tbody>`);
 
-  document.querySelector('#intel-tipos').innerHTML = r.porTipo.map((t) => `
+  /* ---- próprio contra compartilhado */
+  const CORES_TIPO = { proprio: '#0E1110', compartilhado: '#A6D934', sem: '#E3E7DA' };
+  pintar('#intel-donut', G.donut(r.porTipo.map((t) => ({ nome: ROTULO_TIPO[t.tipo], valor: t.pdvs, cor: CORES_TIPO[t.tipo] })),
+    { centro: num(s.pdvs), rotulo: 'lojas' }));
+  pintar('#intel-tipos', r.porTipo.map((t) => `
     <div class="tipo">
-      <div class="tipo-top"><b>${esc(ROTULO_TIPO[t.tipo])}</b><small>${esc(SUB_TIPO[t.tipo])}</small></div>
+      <div class="tipo-top"><b><i style="background:${CORES_TIPO[t.tipo]}"></i>${esc(ROTULO_TIPO[t.tipo])}</b><small>${esc(SUB_TIPO[t.tipo])}</small></div>
       <div class="tipo-nums">
         <span><small>Promotores</small><b>${num(t.promotores)}</b></span>
         <span><small>Lojas</small><b>${num(t.pdvs)}</b></span>
@@ -212,20 +351,47 @@ export function desenhar({ lista, todos, qual, nomeProjeto, dataFmt }) {
         <span><small>Lojas por dia</small><b>${t.porDia == null ? '–' : t.porDia.toFixed(1)}</b></span>
         <span><small>Com foto</small><b>${pct(t.comFoto)}</b></span>
       </div>
-    </div>`).join('') || '<p class="dica">Sem registros no filtro.</p>';
+    </div>`).join('') || '<p class="dica">Sem registros no filtro.</p>');
 
-  const maxR = Math.max(1, ...r.ritmo.map((d) => d.registros));
-  document.querySelector('#intel-ritmo').innerHTML = r.ritmo.map((d) => {
-    const dt = new Date(d.dia);
-    const rot = dt.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-    return `<i style="height:${Math.max(3, (d.registros / maxR) * 100)}%" title="${rot}: ${d.registros} registro(s), ${d.pdvs} loja(s)"></i>`;
-  }).join('');
+  /* ---- funil da execução */
+  const comGeo = lista.filter((x) => x.geo).length;
+  const comFotoN = lista.filter((x) => x.temFoto || x.fotoUrl).length;
+  pintar('#intel-funil', G.funil([
+    { nome: 'Registros no QR', valor: s.registros, nota: 'cada leitura de peça no ponto' },
+    { nome: 'Com localização', valor: comGeo, nota: 'GPS do celular no momento da leitura' },
+    { nome: 'Lojas positivadas', valor: s.pdvs, nota: 'pontos de venda distintos, agrupados por GPS' },
+    { nome: 'Com foto da fachada', valor: comFotoN, nota: 'prova visual para auditoria' },
+  ]));
 
-  document.querySelector('#intel-dica').textContent =
+  /* ---- quando o campo acontece */
+  pintar('#intel-heat', G.heatmap(r.heat, r.faixas));
+
+  /* ---- cruzamento rede × projeto */
+  const pontoPorId = new Map(r.pontos.map((p) => [p.id, p]));
+  const cruz = new Map();
+  for (const x of lista) {
+    const p = pontoPorId.get(r.pontoDe.get(x.id));
+    if (!p) continue;
+    const k = `${p.bandeira}|${x.projeto}`;
+    if (!cruz.has(k)) cruz.set(k, new Set());
+    cruz.get(k).add(p.id);
+  }
+  const porRede = new Map();
+  for (const p of r.pontos) porRede.set(p.bandeira, (porRede.get(p.bandeira) || 0) + 1);
+  const redes = [...porRede.entries()].sort((a, b) => b[1] - a[1]).slice(0, 8).map(([k]) => k);
+  const projetos = [...new Set(lista.map((x) => x.projeto))]
+    .sort((a, b) => lista.filter((x) => x.projeto === b).length - lista.filter((x) => x.projeto === a).length).slice(0, 7);
+  pintar('#intel-matriz', G.matriz({
+    linhas: redes, colunas: projetos,
+    valor: (rede, proj) => cruz.get(`${rede}|${proj}`)?.size || 0,
+    rotuloLinha: (rede) => rede,
+    rotuloColuna: (proj) => nomeProjeto(proj).nome,
+  }));
+
+  el('#intel-dica').textContent =
     `${num(s.pdvs)} loja${s.pdvs === 1 ? '' : 's'} · ${num(s.pecas)} peça${s.pecas === 1 ? '' : 's'} executada${s.pecas === 1 ? '' : 's'}`;
   return r;
 }
-
 /* --------------------------------------------------- cidade e estado pelo GPS */
 
 const cacheGeo = new Map();
@@ -275,7 +441,7 @@ export async function completarCidades({ registros, F, db, aoAtualizar, limite =
 
 const cacheFoto = new Map();
 
-export async function desenharFachadas({ lista, F, db, dataFmt, nomeProjeto, limite = 12 }) {
+export async function desenharFachadas({ lista, F, db, dataFmt, nomeProjeto, limite = 24 }) {
   const grade = document.querySelector('#intel-fachadas');
   const dica = document.querySelector('#intel-fachadas-dica');
   const comFoto = lista.filter((r) => r.temFoto).sort((a, b) => (b.data?.getTime() || 0) - (a.data?.getTime() || 0));
@@ -285,7 +451,7 @@ export async function desenharFachadas({ lista, F, db, dataFmt, nomeProjeto, lim
     return;
   }
   grade.innerHTML = comFoto.slice(0, limite).map((r) => `
-    <figure class="fachada" data-foto="${esc(r.id)}">
+    <figure class="fachada" data-foto="${esc(r.id)}" title="${esc(r.loja)} · ${esc(bandeiraDe(r))}${r.cidade ? ` · ${esc(r.cidade)}/${esc(r.uf || '')}` : ''} · ${esc(r.nome)} · ${esc(r.data ? dataFmt(r.data) : '')}">
       <div class="fachada-img"><span class="carregando-foto"></span></div>
       <figcaption><b>${esc(r.loja)}</b><small>${esc(bandeiraDe(r))}${r.cidade ? ` · ${esc(r.cidade)}/${esc(r.uf || '')}` : ''}</small>
         <small>${esc(nomeProjeto(r.projeto).nome)}</small>

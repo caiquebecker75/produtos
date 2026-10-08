@@ -2,7 +2,7 @@
 import { firebaseConfig, FIREBASE_SDK } from '../assets/firebase-config.js?v=1';
 import { hashSenha, normalizarSenha } from '../assets/senha.js?v=1';
 import { estiloProjeto, htmlMarcador } from './marcadores.js?v=1';
-import { desenhar as desenharIntel, desenharFachadas, completarCidades } from './inteligencia.js?v=1';
+import { desenhar as desenharIntel, desenharFachadas, completarCidades } from './inteligencia.js?v=2';
 
 const [{ initializeApp }, A, F] = await Promise.all([
   import(`${FIREBASE_SDK}/firebase-app.js`),
@@ -173,10 +173,6 @@ function desenhar() {
   preencherPecas();
   const lista = filtrados();
   const norm = (s) => String(s || '').trim().toLowerCase();
-  $('#k-total').textContent = lista.length.toLocaleString('pt-BR');
-  $('#k-lojas').textContent = new Set(lista.map((r) => norm(r.loja))).size.toLocaleString('pt-BR');
-  $('#k-pessoas').textContent = new Set(lista.map((r) => r.telefone)).size.toLocaleString('pt-BR');
-  $('#k-geo').textContent = lista.length ? `${Math.round((lista.filter((r) => r.geo).length / lista.length) * 100)}%` : '0%';
   $('#contagem').textContent = `${lista.length} de ${registros.length}`;
 
   // tabela
@@ -242,6 +238,18 @@ function desenharInteligencia(lista) {
   clearTimeout(fachadasT);
   fachadasT = setTimeout(() => desenharFachadas({ lista, F, db, dataFmt, nomeProjeto }).catch((e) => console.error('fachadas', e)), 250);
 }
+// as fotos ficam minimizadas (tira de miniaturas); o botão amplia e a escolha fica guardada
+const blocoFachadas = $('#intel-fachadas-bloco');
+const btnFachadas = $('#intel-fachadas-abrir');
+function ajustarFachadas(aberto) {
+  blocoFachadas.dataset.aberto = aberto ? '1' : '0';
+  btnFachadas.textContent = aberto ? 'Minimizar fotos' : 'Ampliar fotos';
+  btnFachadas.setAttribute('aria-expanded', aberto ? 'true' : 'false');
+  try { localStorage.setItem('painel-fachadas', aberto ? '1' : '0'); } catch {}
+}
+btnFachadas.addEventListener('click', () => ajustarFachadas(blocoFachadas.dataset.aberto !== '1'));
+ajustarFachadas((() => { try { return localStorage.getItem('painel-fachadas') === '1'; } catch { return false; } })());
+
 $('#intel-abas').addEventListener('click', (e) => {
   const b = e.target.closest('[data-recorte]');
   if (!b) return;
