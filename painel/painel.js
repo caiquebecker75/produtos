@@ -2,6 +2,7 @@
 import { firebaseConfig, FIREBASE_SDK } from '../assets/firebase-config.js?v=1';
 import { hashSenha, normalizarSenha } from '../assets/senha.js?v=1';
 import { estiloProjeto, htmlMarcador } from './marcadores.js?v=1';
+import { desenhar as desenharIntel, desenharFachadas, completarCidades } from './inteligencia.js?v=1';
 
 const [{ initializeApp }, A, F] = await Promise.all([
   import(`${FIREBASE_SDK}/firebase-app.js`),
@@ -101,6 +102,8 @@ async function iniciar() {
     });
     preencherProjetos();
     if (!editando) desenhar();
+    // cidade e estado não vêm no registro: completa uma vez por ponto e grava de volta
+    completarCidades({ registros, F, db, aoAtualizar: () => { if (!editando) desenhar(); } });
   }, (e) => {
     console.error(e);
     toast(e.code === 'permission-denied' ? 'Sem permissão para ler os registros.' : 'Erro ao carregar os registros.');
@@ -187,8 +190,8 @@ function desenhar() {
     return `<tr>
       <td>${dataFmt(r.data)}</td>
       <td>${esc(p.nome)}<small>${esc(p.cliente)}</small>${nomesPecas(r).length ? `<small class="pecas">${esc(nomesPecas(r).join(' · '))}</small>` : ''}</td>
-      <td><b>${esc(r.loja)}</b></td>
-      <td>${esc(r.nome)}</td>
+      <td><b>${esc(r.loja)}</b>${r.bandeira || r.cidade ? `<small>${esc([r.bandeira, r.cidade && `${r.cidade}/${r.uf || ''}`.replace(/\/$/, '')].filter(Boolean).join(' · '))}</small>` : ''}</td>
+      <td>${esc(r.nome)}${r.tipoPromotor ? `<small>${r.tipoPromotor === 'proprio' ? 'Próprio' : 'Compartilhado'}</small>` : ''}</td>
       <td>${wa ? `<a href="${wa}" target="_blank" rel="noopener">${esc(telFmt(r.telefone))}</a>` : ''}</td>
       <td>${local}</td>
       <td><span class="selo ${r.origem === 'qr' ? 'ok' : ''}">${r.origem === 'qr' ? 'QR code' : 'Link'}</span></td>
@@ -226,7 +229,26 @@ function desenhar() {
   }).join('') || '<li class="pc">Nenhum projeto ainda.</li>';
 
   desenharMapa(lista);
+  desenharInteligencia(lista);
 }
+
+// ------------------------------------------------- inteligência de PDV
+let recorteAtual = 'bandeira';
+let fachadasT;
+function desenharInteligencia(lista) {
+  try {
+    desenharIntel({ lista, todos: registros, qual: recorteAtual, nomeProjeto, dataFmt });
+  } catch (e) { console.error('inteligência', e); }
+  clearTimeout(fachadasT);
+  fachadasT = setTimeout(() => desenharFachadas({ lista, F, db, dataFmt, nomeProjeto }).catch((e) => console.error('fachadas', e)), 250);
+}
+$('#intel-abas').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-recorte]');
+  if (!b) return;
+  recorteAtual = b.dataset.recorte;
+  $('#intel-abas').querySelectorAll('.aba').forEach((x) => x.classList.toggle('sel', x === b));
+  desenharInteligencia(filtrados());
+});
 
 function desenharMapa(lista) {
   if (!window.L) return setTimeout(() => desenharMapa(filtrados()), 300);
@@ -290,8 +312,13 @@ $('#exportar').addEventListener('click', () => {
     'Projeto': nomeProjeto(r.projeto).nome,
     'Peças': nomesPecas(r).join(', '),
     'Loja': r.loja,
+    'Rede': r.bandeira || '',
+    'Cidade': r.cidade || '',
+    'UF': r.uf || '',
     'Promotor': r.nome,
+    'Tipo de promotor': r.tipoPromotor === 'proprio' ? 'Próprio' : r.tipoPromotor === 'compartilhado' ? 'Compartilhado' : '',
     'Telefone': telFmt(r.telefone),
+    'Foto da fachada': r.temFoto ? 'Sim' : 'Não',
     'Latitude': r.geo?.lat ?? '',
     'Longitude': r.geo?.lng ?? '',
     'Precisão (m)': r.geo?.precisao ?? '',

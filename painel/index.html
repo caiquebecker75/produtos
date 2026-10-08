@@ -11,10 +11,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Lexend:wght@200;300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="painel.css?v=7">
+<link rel="stylesheet" href="painel.css?v=8">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script defer src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-<script type="module" src="painel.js?v=7"></script>
+<script type="module" src="painel.js?v=8"></script>
 </head>
 <body>
 
@@ -69,6 +69,39 @@
       <div class="kpi"><small>Lojas</small><b id="k-lojas">0</b></div>
       <div class="kpi"><small>Promotores</small><b id="k-pessoas">0</b></div>
       <div class="kpi"><small>Com localização</small><b id="k-geo">0%</b></div>
+    </section>
+
+    <section class="card intel">
+      <div class="card-top">
+        <h2>Inteligência de PDV</h2>
+        <span class="dica"><span id="intel-dica"></span> <em id="intel-geo"></em></span>
+      </div>
+      <div class="kpis intel-kpis" id="intel-kpis"></div>
+      <div class="intel-cols">
+        <div class="intel-bloco">
+          <div class="intel-top">
+            <h3>Positivação por</h3>
+            <div class="abas" id="intel-abas">
+              <button type="button" class="aba sel" data-recorte="bandeira">Rede</button>
+              <button type="button" class="aba" data-recorte="cidade">Cidade</button>
+              <button type="button" class="aba" data-recorte="uf">Estado</button>
+              <button type="button" class="aba" data-recorte="projeto">Projeto</button>
+              <button type="button" class="aba" data-recorte="promotor">Promotor</button>
+            </div>
+          </div>
+          <div class="tabela-wrap"><table class="tabela intel-tabela" id="intel-tabela"></table></div>
+        </div>
+        <div class="intel-bloco">
+          <h3>Promotor próprio e compartilhado</h3>
+          <div class="tipos" id="intel-tipos"></div>
+          <h3 class="mt">Ritmo dos últimos 30 dias</h3>
+          <div class="ritmo" id="intel-ritmo"></div>
+        </div>
+      </div>
+      <div class="intel-bloco">
+        <div class="intel-top"><h3>Fachadas registradas</h3><span class="dica" id="intel-fachadas-dica"></span></div>
+        <div class="fachadas" id="intel-fachadas"></div>
+      </div>
     </section>
 
     <section class="grade">
