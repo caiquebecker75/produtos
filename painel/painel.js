@@ -2,7 +2,7 @@
 import { firebaseConfig, FIREBASE_SDK } from '../assets/firebase-config.js?v=1';
 import { hashSenha, normalizarSenha } from '../assets/senha.js?v=1';
 import { estiloProjeto, htmlMarcador } from './marcadores.js?v=1';
-import { desenhar as desenharIntel, desenharFachadas, completarCidades } from './inteligencia.js?v=2';
+import { desenhar as desenharIntel, desenharFachadas, completarCidades } from './inteligencia.js?v=3';
 
 const [{ initializeApp }, A, F] = await Promise.all([
   import(`${FIREBASE_SDK}/firebase-app.js`),

@@ -8,7 +8,7 @@
 // Cidade e estado não vêm no registro: a primeira vez que o painel vê um ponto, ele pergunta ao
 // Nominatim (OpenStreetMap) e grava de volta no documento, então o custo é pago uma vez só.
 
-import * as G from './graficos.js?v=1';
+import * as G from './graficos.js?v=2';
 
 const RAIO_PDV_M = 150;
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -353,14 +353,15 @@ export function desenhar({ lista, todos, qual, nomeProjeto, dataFmt }) {
       </div>
     </div>`).join('') || '<p class="dica">Sem registros no filtro.</p>');
 
-  /* ---- funil da execução */
+  /* ---- funil da execução, sempre na mesma base: a leitura do QR */
   const comGeo = lista.filter((x) => x.geo).length;
   const comFotoN = lista.filter((x) => x.temFoto || x.fotoUrl).length;
+  const completo = lista.filter((x) => x.geo && (x.temFoto || x.fotoUrl) && (x.pecas || []).length).length;
   pintar('#intel-funil', G.funil([
-    { nome: 'Registros no QR', valor: s.registros, nota: 'cada leitura de peça no ponto' },
+    { nome: 'Leituras do QR', valor: s.registros, nota: `em ${num(s.pdvs)} loja${s.pdvs === 1 ? '' : 's'}` },
     { nome: 'Com localização', valor: comGeo, nota: 'GPS do celular no momento da leitura' },
-    { nome: 'Lojas positivadas', valor: s.pdvs, nota: 'pontos de venda distintos, agrupados por GPS' },
-    { nome: 'Com foto da fachada', valor: comFotoN, nota: 'prova visual para auditoria' },
+    { nome: 'Com foto da fachada', valor: comFotoN, nota: 'prova visual da loja' },
+    { nome: 'Auditoria completa', valor: completo, nota: 'peça marcada, GPS e foto no mesmo registro' },
   ]));
 
   /* ---- quando o campo acontece */
