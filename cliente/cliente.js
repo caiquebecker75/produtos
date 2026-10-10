@@ -38,12 +38,17 @@ let visitaContada = false;
 
 const registros = () => [...porProjeto.values()].flat().sort((a, b) => (b.data?.getTime() || 0) - (a.data?.getTime() || 0));
 
+let tentarDeNovo = null;
 function fechar(titulo, texto) {
   paradas.forEach((p) => p());
   paradas = [];
+  link = null;
   $('#fechada-tit').textContent = titulo;
   $('#fechada-txt').textContent = texto;
   telas('fechada');
+  // se a equipe reativar o link, a página volta sozinha: tenta de novo de meio em meio minuto
+  clearTimeout(tentarDeNovo);
+  if (token) tentarDeNovo = setTimeout(ouvirLink, 30000);
 }
 
 function nomeProjeto(slug) {
@@ -59,11 +64,9 @@ function nomePeca(slug, id) {
 
 /* ------------------------------------------------------------------ início */
 
-if (!token) {
-  fechar('Link inválido', 'O endereço veio sem o código do acompanhamento. Peça o link completo ao seu contato na 75 LAB.');
-} else {
-  try { catalogo = await (await fetch('../projetos.json', { cache: 'no-store' })).json(); } catch { catalogo = []; }
-
+function ouvirLink() {
+  paradas.forEach((p) => p());
+  paradas = [];
   paradas.push(F.onSnapshot(F.doc(db, 'compartilhamentos', token), (snap) => {
     if (!snap.exists()) {
       return fechar('Link encerrado', 'Este acompanhamento não está mais disponível. Fale com o seu contato na 75 LAB para receber um link novo.');
@@ -85,6 +88,13 @@ if (!token) {
     console.error(e);
     fechar('Link encerrado', 'Este acompanhamento não está mais disponível. Fale com o seu contato na 75 LAB para receber um link novo.');
   }));
+}
+
+if (!token) {
+  fechar('Link inválido', 'O endereço veio sem o código do acompanhamento. Peça o link completo ao seu contato na 75 LAB.');
+} else {
+  try { catalogo = await (await fetch('../projetos.json', { cache: 'no-store' })).json(); } catch { catalogo = []; }
+  ouvirLink();
 }
 
 async function contarVisita() {
