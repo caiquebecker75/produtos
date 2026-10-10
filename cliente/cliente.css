@@ -1,0 +1,43 @@
+/* Página do cliente: mesma identidade do painel, com cara de relatório vivo. */
+.cli { background: var(--paper); }
+
+.cli-barra { background: var(--ink); color: #fff; position: sticky; top: 0; z-index: 1000; }
+.cli-barra-in { max-width: 1240px; margin: 0 auto; padding: 12px var(--pad); display: flex; align-items: center; gap: 14px; }
+.cli-barra img { height: 30px; width: auto; }
+.cli-marca { font-size: 13px; color: #B5BAAE; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ao-vivo { margin-left: auto; display: inline-flex; align-items: center; gap: 7px; font-size: 11.5px; letter-spacing: 1.6px; text-transform: uppercase; font-family: var(--anton); color: var(--lime); flex: none; }
+.ao-vivo i { width: 8px; height: 8px; border-radius: 50%; background: var(--lime); animation: pulso 1.8s ease-in-out infinite; }
+@keyframes pulso { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: .35; transform: scale(.7); } }
+
+.cli-conteudo { max-width: 1240px; margin: 0 auto; padding: 22px var(--pad) 50px; display: grid; gap: 16px; }
+
+.cli-capa { padding: 10px 2px 4px; }
+.cli-capa h1 { font-weight: 200; text-transform: uppercase; font-size: clamp(32px, 6vw, 58px); line-height: .96; letter-spacing: -.5px; margin-top: 12px; }
+.cli-capa p { color: var(--ink2); font-size: 15px; margin-top: 12px; max-width: 70ch; }
+.cli-atualizado { font-size: 12.5px !important; color: var(--ink3) !important; margin-top: 8px !important; }
+
+.cli .card { padding: clamp(16px, 2.2vw, 24px); }
+.cli .bignums { grid-template-columns: 1.3fr repeat(4, minmax(0, 1fr)); }
+@media (max-width: 1100px) { .cli .bignums { grid-template-columns: 1fr 1fr; } }
+.cli .bn { background: #fff; }
+.cli .bn.destaque { background: var(--ink); }
+.cli .insights { margin-top: 0; }
+.cli .grade { grid-template-columns: 1.5fr 1fr; }
+@media (max-width: 1000px) { .cli .grade { grid-template-columns: 1fr; } }
+#cli-mapa { height: 420px; border-radius: 14px; background: var(--paper); z-index: 0; }
+.cli .card-top { align-items: center; }
+
+.cli-tabela { min-width: 640px; font-size: 13.5px; }
+.cli-tabela td { vertical-align: top; }
+.cli-tabela td.n { text-align: right; white-space: nowrap; }
+.cli-tabela td small { display: block; color: var(--ink3); font-size: 12px; }
+
+.cli-rodape { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 22px 2px 0; border-top: 1px solid var(--rule); margin-top: 8px; }
+.cli-rodape p { font-size: 12.5px; color: var(--ink3); max-width: 70ch; }
+
+/* link fora do ar */
+.fechada { min-height: 100vh; min-height: 100svh; display: grid; place-items: center; padding: 24px 16px; background: var(--lime); }
+.fechada-card { background: #fff; border-radius: 28px; padding: clamp(28px, 5vw, 48px); width: min(100%, 480px); }
+.fechada-card img { height: 48px; width: auto; margin-bottom: 26px; }
+.fechada-card h1 { font-weight: 200; text-transform: uppercase; font-size: clamp(30px, 7vw, 44px); line-height: .96; letter-spacing: -.5px; }
+.fechada-card p { color: var(--ink2); margin-top: 14px; font-size: 15px; }

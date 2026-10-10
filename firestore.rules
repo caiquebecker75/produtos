@@ -40,6 +40,17 @@ service cloud.firestore {
         && (!('precisao' in g) || g.precisao is number));
     }
 
+    function projetoPublico(slug) {
+      return exists(/databases/$(database)/documents/publicos/$(slug))
+        && (get(/databases/$(database)/documents/publicos/$(slug)).data.get('ate', null) == null
+            || get(/databases/$(database)/documents/publicos/$(slug)).data.ate > request.time);
+    }
+
+    function projetoComFotoPublica(slug) {
+      return projetoPublico(slug)
+        && get(/databases/$(database)/documents/publicos/$(slug)).data.get('fotos', false) == true;
+    }
+
     match /senhas/{projeto} {
       allow read, delete: if equipe75();
       allow create, update: if equipe75()
@@ -122,7 +133,10 @@ service cloud.firestore {
         && (paginaSemSenha(request.resource.data.projeto)
           || senhaConfere(request.resource.data.projeto, request.resource.data.get('senhaHash', '')));
 
-      allow read, update, delete: if equipe75();
+      // painel do cliente (link público): a equipe lê tudo; de fora, só os registros de um
+      // projeto com link ativo, e a consulta precisa filtrar por projeto (a regra vale documento a documento)
+      allow get, list: if equipe75() || projetoPublico(resource.data.projeto);
+      allow update, delete: if equipe75();
     }
 
     // foto da fachada (16/09): um documento por instalação, com o mesmo id, criado logo depois do registro.
@@ -135,7 +149,56 @@ service cloud.firestore {
         && request.resource.data.criadoEm == request.time
         && exists(/databases/$(database)/documents/instalacoes/$(id))
         && get(/databases/$(database)/documents/instalacoes/$(id)).data.criadoEm > request.time - duration.value(30, 'm');
-      allow read, delete: if equipe75();
+      allow get: if equipe75()
+        || (exists(/databases/$(database)/documents/instalacoes/$(id))
+            && projetoComFotoPublica(get(/databases/$(database)/documents/instalacoes/$(id)).data.projeto));
+      allow list, delete: if equipe75();
+    }
+
+    /* ---------------------------------------------------------------- link do cliente
+       compartilhamentos/{token}: um link por campanha, criado no painel. Quem tem o token lê o
+       documento (não dá para listar), e só enquanto estiver ativo e dentro da validade.
+       publicos/{projeto}: espelho que o painel mantém, e é o que libera a leitura dos registros
+       daquele projeto. Bloquear ou apagar o link no painel tira o projeto daqui e o link morre. */
+    function compartilhamentoValido(d) {
+      return d.keys().hasOnly(['titulo', 'cliente', 'projetos', 'ativo', 'fotos', 'promotores',
+                               'observacao', 'expiraEm', 'criadoEm', 'criadoPor', 'atualizadoEm',
+                               'atualizadoPor', 'visitas', 'ultimoAcesso'])
+        && texto(d.titulo, 2, 120)
+        && texto(d.cliente, 0, 120)
+        && d.projetos is list && d.projetos.size() >= 1 && d.projetos.size() <= 12
+        && d.ativo is bool && d.fotos is bool && d.promotores is bool
+        && (!('observacao' in d) || texto(d.observacao, 0, 400))
+        && (!('expiraEm' in d) || d.expiraEm == null || d.expiraEm is timestamp)
+        && (!('visitas' in d) || d.visitas is number);
+    }
+
+    function linkNoAr(d) {
+      return d.get('ativo', false) == true
+        && (d.get('expiraEm', null) == null || d.expiraEm > request.time);
+    }
+
+    match /compartilhamentos/{token} {
+      allow get: if equipe75() || linkNoAr(resource.data);
+      allow list, delete: if equipe75();
+      allow create, update: if equipe75() && compartilhamentoValido(request.resource.data);
+      // o visitante só carimba a visita (nada mais pode mudar sem login)
+      allow update: if linkNoAr(resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['visitas', 'ultimoAcesso'])
+        && request.resource.data.visitas == resource.data.get('visitas', 0) + 1
+        && request.resource.data.ultimoAcesso == request.time;
+    }
+
+    match /publicos/{projeto} {
+      allow get: if true;
+      allow list: if equipe75();
+      allow create, update: if equipe75() && slugValido(projeto)
+        && request.resource.data.keys().hasOnly(['fotos', 'ate', 'atualizadoEm', 'atualizadoPor'])
+        && request.resource.data.fotos is bool
+        && (request.resource.data.get('ate', null) == null || request.resource.data.ate is timestamp)
+        && request.resource.data.atualizadoEm == request.time
+        && request.resource.data.atualizadoPor == request.auth.token.email;
+      allow delete: if equipe75();
     }
 
     match /{doc=**} {

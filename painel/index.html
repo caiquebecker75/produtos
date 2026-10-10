@@ -11,10 +11,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Lexend:wght@200;300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="painel.css?v=12">
+<link rel="stylesheet" href="painel.css?v=13">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script defer src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-<script type="module" src="painel.js?v=10"></script>
+<script type="module" src="painel.js?v=11"></script>
 </head>
 <body>
 
@@ -145,6 +145,16 @@
       </div>
     </section>
 
+    <section class="card" id="card-links">
+      <div class="card-top">
+        <h2>Links para o cliente</h2>
+        <span class="dica"><span id="links-dica"></span> · acompanhamento ao vivo, sem login</span>
+      </div>
+      <p class="links-intro">Escolha a campanha e saia com um endereço público: quem tem o link vê a execução atualizando sozinha, sem senha e sem conta. Dá para bloquear, editar e apagar quando quiser.</p>
+      <button type="button" class="btn-lime" id="link-novo">Criar link</button>
+      <ul class="links" id="lista-links"></ul>
+    </section>
+
     <section class="card">
       <div class="card-top"><h2>Registros</h2><span class="dica" id="contagem"></span></div>
       <div class="tabela-wrap">
@@ -157,6 +167,54 @@
     </section>
   </main>
 </div>
+<dialog class="modal" id="link-editor">
+  <form method="dialog" id="link-form" class="modal-in">
+    <div class="modal-top">
+      <h3 id="link-editor-tit">Novo link para o cliente</h3>
+      <button type="button" class="modal-x" id="link-fechar" aria-label="Fechar">×</button>
+    </div>
+
+    <label class="campo"><span>Nome do link</span>
+      <input name="titulo" type="text" maxlength="120" placeholder="Execução Polenguinho · outubro" required>
+      <small>Aparece no topo da página do cliente.</small>
+    </label>
+
+    <label class="campo"><span>Cliente</span>
+      <input name="cliente" type="text" maxlength="120" placeholder="Savencia Fromage &amp; Dairy">
+    </label>
+
+    <div class="campo"><span>Campanhas que entram no link</span>
+      <div class="escolher-projetos" id="link-projetos"></div>
+    </div>
+
+    <div class="campo"><span>Validade</span>
+      <div class="opcoes">
+        <label><input type="radio" name="validade" value="sem" checked> Sem validade</label>
+        <label><input type="radio" name="validade" value="7"> 7 dias</label>
+        <label><input type="radio" name="validade" value="30"> 30 dias</label>
+        <label><input type="radio" name="validade" value="90"> 90 dias</label>
+        <label><input type="radio" name="validade" value="data"> Até uma data</label>
+      </div>
+      <input type="date" name="ate" id="link-ate" hidden>
+    </div>
+
+    <div class="campo"><span>O que o cliente vê</span>
+      <label class="chave"><input type="checkbox" name="fotos" checked> Fotos das fachadas das lojas</label>
+      <label class="chave"><input type="checkbox" name="promotores" checked> Nome dos promotores (o telefone nunca aparece)</label>
+    </div>
+
+    <label class="campo"><span>Recado na página (opcional)</span>
+      <textarea name="observacao" maxlength="400" rows="2" placeholder="Acompanhe aqui a instalação das peças, atualizada em tempo real."></textarea>
+    </label>
+
+    <p class="link-erro" id="link-erro" hidden></p>
+    <div class="modal-acoes">
+      <button type="button" class="btn-mini contorno" id="link-cancelar">Cancelar</button>
+      <button type="submit" class="btn-lime">Salvar link</button>
+    </div>
+  </form>
+</dialog>
+
 <div class="toast" role="status" aria-live="polite"></div>
 </body>
 </html>

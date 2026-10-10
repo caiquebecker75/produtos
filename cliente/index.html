@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Execução no PDV · 75 LAB</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0E1110">
+<link rel="icon" href="../assets/img/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Lexend:wght@200;300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="../painel/painel.css?v=13">
+<link rel="stylesheet" href="cliente.css?v=1">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script type="module" src="cliente.js?v=1"></script>
+</head>
+<body class="cli">
+
+<div id="tela-carregando" class="carregando"><span></span></div>
+
+<!-- link fora do ar -->
+<main id="tela-fechada" class="fechada" hidden>
+  <div class="fechada-card">
+    <img src="../assets/img/logo-75lab-preto.png" alt="75 LAB" width="68" height="48">
+    <h1 id="fechada-tit">Link encerrado</h1>
+    <p id="fechada-txt">Este acompanhamento não está mais disponível. Fale com o seu contato na 75 LAB para receber um link novo.</p>
+  </div>
+</main>
+
+<!-- painel do cliente -->
+<div id="tela-cliente" hidden>
+  <header class="cli-barra">
+    <div class="cli-barra-in">
+      <img src="../assets/img/logo-75lab-lime.png" alt="75 LAB" width="45" height="32">
+      <span class="cli-marca" id="cli-cliente"></span>
+      <span class="ao-vivo"><i></i>ao vivo</span>
+    </div>
+  </header>
+
+  <main class="cli-conteudo">
+    <section class="cli-capa">
+      <div class="eyebrow">Execução no ponto de venda</div>
+      <h1 id="cli-titulo"></h1>
+      <p id="cli-recado"></p>
+      <p class="cli-atualizado" id="cli-atualizado"></p>
+    </section>
+
+    <div class="bignums" id="cli-bn"></div>
+    <div class="insights" id="cli-insights"></div>
+
+    <section class="card">
+      <div class="card-top"><h2>Ritmo de execução</h2><span class="dica" id="cli-ritmo-dica"></span></div>
+      <div class="ritmo-cx">
+        <div id="cli-ritmo"></div>
+        <div class="ritmo-leg"><span><i class="q lime"></i>registros do dia</span><span><i class="q escura"></i>lojas acumuladas</span></div>
+      </div>
+    </section>
+
+    <section class="grade">
+      <div class="card mapa-card">
+        <div class="card-top"><h2>Onde já estamos</h2><span class="dica" id="cli-mapa-dica"></span></div>
+        <div id="cli-mapa"></div>
+      </div>
+      <div class="card">
+        <div class="card-top"><h2>Peças instaladas</h2><span class="dica">por tipo de peça</span></div>
+        <div id="cli-pecas"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-top">
+        <h2>Cobertura</h2>
+        <div class="abas" id="cli-abas">
+          <button type="button" class="aba sel" data-recorte="bandeira">Rede</button>
+          <button type="button" class="aba" data-recorte="cidade">Cidade</button>
+          <button type="button" class="aba" data-recorte="uf">Estado</button>
+          <button type="button" class="aba" data-recorte="projeto">Campanha</button>
+        </div>
+      </div>
+      <div id="cli-barras"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-top"><h2>Lojas positivadas</h2><span class="dica" id="cli-lojas-dica"></span></div>
+      <div class="tabela-wrap"><table class="tabela cli-tabela"><tbody id="cli-lojas"></tbody></table></div>
+    </section>
+
+    <section class="card" id="cli-fachadas-card" hidden>
+      <div class="card-top"><h2>Fachadas registradas</h2><span class="dica" id="cli-fachadas-dica"></span></div>
+      <div class="fachadas" id="cli-fachadas"></div>
+    </section>
+
+    <footer class="cli-rodape">
+      <img src="../assets/img/logo-75lab-preto.png" alt="75 LAB" width="56" height="40">
+      <p>Acompanhamento de execução no PDV feito pela <b>75 LAB</b>. Os dados chegam do QR code de cada peça, lido pelo promotor na loja, e esta página se atualiza sozinha.</p>
+    </footer>
+  </main>
+</div>
+
+</body>
+</html>

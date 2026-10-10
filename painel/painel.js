@@ -3,6 +3,7 @@ import { firebaseConfig, FIREBASE_SDK } from '../assets/firebase-config.js?v=1';
 import { hashSenha, normalizarSenha } from '../assets/senha.js?v=1';
 import { estiloProjeto, htmlMarcador } from './marcadores.js?v=1';
 import { desenhar as desenharIntel, desenharFachadas, completarCidades } from './inteligencia.js?v=3';
+import { iniciarLinks, pararLinks } from './links.js?v=1';
 
 const [{ initializeApp }, A, F] = await Promise.all([
   import(`${FIREBASE_SDK}/firebase-app.js`),
@@ -60,6 +61,7 @@ A.onAuthStateChanged(auth, async (user) => {
   pararLeitura?.();
   pararSenhas?.();
   pararPaginas?.();
+  pararLinks();
   pararLeitura = pararSenhas = pararPaginas = null;
   if (!user) return telas('login');
   if (!user.email?.toLowerCase().endsWith(DOMINIO) || !user.emailVerified) {
@@ -86,6 +88,10 @@ const visiveis = new Set();
 
 async function iniciar() {
   try { catalogo = await (await fetch('../projetos.json', { cache: 'no-store' })).json(); } catch { catalogo = []; }
+  iniciarLinks({
+    F, db, email: usuarioEmail, toast, dataFmt, nomeProjeto,
+    catalogo: () => [...catalogo].sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
+  });
   pararPaginas = F.onSnapshot(F.collection(db, 'paginas'), (snap) => {
     paginas = Object.fromEntries(snap.docs.map((d) => [d.id, d.data()]));
     if (!editando) desenhar();
