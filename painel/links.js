@@ -103,7 +103,16 @@ async function aoClicarNaLista(e) {
   if (b.dataset.acao === 'abrir') window.open(url, '_blank', 'noopener');
   if (b.dataset.acao === 'editar') abrirEditor(l);
   if (b.dataset.acao === 'estado') await mudarEstado(l, !l.ativo);
-  if (b.dataset.acao === 'apagar') await apagar(l);
+  if (b.dataset.acao === 'apagar') {
+    // confirmação no próprio botão: nada de janela do navegador travando o painel
+    if (b.dataset.certeza !== '1') {
+      b.dataset.certeza = '1';
+      b.textContent = 'Clique de novo para apagar';
+      setTimeout(() => { if (b.isConnected && b.dataset.certeza === '1') { b.dataset.certeza = ''; b.textContent = 'Apagar'; } }, 5000);
+      return;
+    }
+    await apagar(l);
+  }
 }
 
 /* ------------------------------------------------------------------ editor */
@@ -210,7 +219,6 @@ async function mudarEstado(l, ativo) {
 }
 
 async function apagar(l) {
-  if (!confirm(`Apagar o link "${l.titulo}"? Quem tiver o endereço deixa de ver a campanha.`)) return;
   try {
     await ctx.F.deleteDoc(ctx.F.doc(ctx.db, 'compartilhamentos', l.id));
     await sincronizarPublicos(l.id);
