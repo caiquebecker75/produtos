@@ -1,5 +1,93 @@
 [
   {
+    "slug": "getpower-display-balcao",
+    "cliente": "GETPOWER",
+    "nome": "Display de balcão",
+    "cor": "#C92A2A",
+    "sigla": "DB",
+    "criado": "2026-10-14"
+  },
+  {
+    "slug": "getpower-display-gancheira",
+    "cliente": "GETPOWER",
+    "nome": "Display gancheira",
+    "cor": "#B35309",
+    "sigla": "DG",
+    "criado": "2026-10-14"
+  },
+  {
+    "slug": "getpower-totem-mesa",
+    "cliente": "GETPOWER",
+    "nome": "Totem de mesa",
+    "cor": "#E67700",
+    "sigla": "TM",
+    "criado": "2026-10-14"
+  },
+  {
+    "slug": "getpower-adesivo-chao-seta",
+    "cliente": "GETPOWER",
+    "nome": "Adesivo de chão · Seta",
+    "cor": "#FF922B",
+    "sigla": "AS",
+    "criado": "2026-10-14"
+  },
+  {
+    "slug": "getpower-adesivo-chao-circulacao",
+    "cliente": "GETPOWER",
+    "nome": "Adesivo de chão · Pegou sua pilha?",
+    "cor": "#FAB005",
+    "sigla": "AC",
+    "criado": "2026-10-14"
+  },
+  {
+    "slug": "getpower-clip-strip",
+    "cliente": "GETPOWER",
+    "nome": "Clip strip",
+    "cor": "#F76707",
+    "sigla": "CS",
+    "criado": "2026-10-14"
+  },
+  {
+    "slug": "getpower-banner",
+    "cliente": "GETPOWER",
+    "nome": "Banner",
+    "cor": "#D9480F",
+    "sigla": "BN",
+    "criado": "2026-10-14"
+  },
+  {
+    "slug": "getpower-totem-eliptico",
+    "cliente": "GETPOWER",
+    "nome": "Totem elíptico",
+    "cor": "#FFB300",
+    "sigla": "TE",
+    "criado": "2026-10-14"
+  },
+  {
+    "slug": "getpower-faixa-gondola",
+    "cliente": "GETPOWER",
+    "nome": "Faixa de gôndola",
+    "cor": "#E8590C",
+    "sigla": "FG",
+    "criado": "2026-10-14"
+  },
+  {
+    "slug": "getpower-wobbler",
+    "cliente": "GETPOWER",
+    "nome": "Wobbler",
+    "cor": "#FF9500",
+    "sigla": "WB",
+    "criado": "2026-10-14"
+  },
+  {
+    "slug": "getpower-stopper",
+    "cliente": "GETPOWER",
+    "nome": "Stopper",
+    "cor": "#F07A1A",
+    "sigla": "ST",
+    "criado": "2026-10-14"
+  },
+  {
     "slug": "savencia-polenguinho-fresco",
     "cliente": "Savencia Fromage & Dairy",
     "nome": "Polenguinho Fresco",
