@@ -42,8 +42,8 @@ const logo = (f) => `data:image/png;base64,${readFileSync(path.join(raiz, 'asset
 const peca = P.nome;
 const linhaPeca = P.linha && !/^pilhas/i.test(P.linha) ? P.linha : '';
 const temKit = !!P.kit?.length;
-// a frase muda com o que a pessoa vai encontrar do outro lado do código
-const recado = temKit ? 'Marque as peças e veja a montagem' : 'Veja a montagem e registre a instalação';
+// a frase é a mesma em todos os modelos: o que o promotor vai fazer do outro lado do código
+const recado = 'Registre a positivação do material';
 const passos = [
   ...(livre ? [] : ['Senha de acesso']),
   ...(temKit ? ['Peças desta loja'] : []),
@@ -119,7 +119,7 @@ const MODELOS = {
     `,
     corpo: `
       <div class="qr">${svgQR()}</div>
-      <p class="frase anton">Montagem <i>· 75 LAB</i></p>`,
+      <p class="frase anton">Positivação <i>· 75 LAB</i></p>`,
   },
   // 60 × 90 mm: a etiqueta completa, com os passos, na metade do tamanho da original.
   'cartao-60x90': {
