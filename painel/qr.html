@@ -16,6 +16,11 @@
   @media (min-width: 820px) { .wrap { grid-template-columns: minmax(0, 440px) 1fr; gap: 48px; } }
   .etiqueta { background: #fff; border-radius: 24px; padding: 18px; }
   .etiqueta img { display: block; width: 100%; height: auto; border-radius: 10px; }
+  .etiqueta.pequena img { width: auto; max-width: 100%; max-height: 62vh; margin: 0 auto; }
+  .modelos { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 14px; }
+  .modelos button { background: #F1F2EC; border: 0; border-radius: 20px; padding: 7px 13px; font-size: 12.5px; color: #54594E; cursor: pointer; font: inherit; font-size: 12.5px; }
+  .modelos button.sel { background: #0E1110; color: #fff; }
+  .modelos button small { display: block; font-size: 10.5px; opacity: .7; }
   .topo img { height: 36px; width: auto; }
   .eyebrow { font-family: var(--anton); font-size: 12px; letter-spacing: 2.6px; text-transform: uppercase; color: var(--ink2); display: flex; gap: 10px; align-items: center; margin-top: 28px; }
   .eyebrow::before { content: ""; width: 22px; height: 2px; background: #A6D934; }
@@ -49,8 +54,9 @@
   </figure>
   <div class="lado">
     <div class="topo"><img src="../assets/img/logo-75lab-preto.png" alt="75 LAB" width="51" height="36"></div>
-    <div class="eyebrow">Etiqueta QR · 10 × 15 cm</div>
+    <div class="eyebrow" id="eyebrow">Etiqueta QR · 10 × 15 cm</div>
     <h1 id="titulo">Etiqueta <b>da peça</b></h1>
+    <div class="modelos" id="modelos"></div>
     <p class="info" id="info">Imprima e mande junto com a peça. Quem escanear vai precisar da <b>senha de acesso</b> definida no painel.</p>
     <div class="acoes">
       <button class="btn principal" id="imprimir" type="button">Imprimir <small>tamanho real 10 × 15 cm</small></button>
@@ -67,16 +73,47 @@
   const slug = (new URLSearchParams(location.search).get('p') || '').replace(/[^a-z0-9-]/g, '');
   const base = `../${slug}/qr/`;
   const img = document.getElementById('img');
-  // sufixo '' = etiqueta com o passo da senha · '-livre' = página liberada sem senha no painel
+  // cada modelo é um arquivo próprio em <pasta>/qr/. O sufixo '-livre' é a versão sem o passo da senha.
+  const MODELOS = [
+    { id: 'etiqueta',     nome: 'Completa',  medida: '10 × 15 cm', w: 100, h: 150, livre: true },
+    { id: 'cartao-60x90', nome: 'Cartão',    medida: '6 × 9 cm',   w: 60,  h: 90,  livre: true },
+    { id: 'selo-50',      nome: 'Selo',      medida: '5 × 5 cm',   w: 50,  h: 50 },
+    { id: 'tira-70x30',   nome: 'Tira',      medida: '7 × 3 cm',   w: 70,  h: 30 },
+    { id: 'mini-35',      nome: 'Mini',      medida: '3,5 × 3,5 cm', w: 35, h: 35 },
+  ];
+  let modelo = MODELOS[0];
+  const figura = document.querySelector('.etiqueta');
+  const estilo = document.createElement('style');
+  document.head.appendChild(estilo);
+
   const aplicar = (sufixo) => {
-    const nomes = { pdf: `etiqueta${sufixo}.pdf`, png: `etiqueta${sufixo}.png`, qrpng: 'qr-code.png', qrsvg: 'qr-code.svg' };
+    // o sufixo da senha só existe nos modelos que listam os passos
+    const suf = modelo.livre ? sufixo : '';
+    const nomes = { pdf: `${modelo.id}${suf}.pdf`, png: `${modelo.id}${suf}.png`, qrpng: 'qr-code.png', qrsvg: 'qr-code.svg' };
     Object.entries(nomes).forEach(([id, arq]) => {
       const a = document.getElementById(id);
       a.href = base + arq;
       a.setAttribute('download', `${slug}-${arq}`);
     });
-    img.src = `${base}etiqueta${sufixo}.png?t=${Date.now()}`;
+    img.hidden = false;
+    document.getElementById('falta').hidden = true;
+    document.querySelectorAll('.acoes').forEach((el) => { el.hidden = false; });
+    img.src = `${base}${modelo.id}${suf}.png?t=${Date.now()}`;
+    figura.classList.toggle('pequena', modelo.id !== 'etiqueta');
+    document.getElementById('eyebrow').textContent = `Etiqueta QR · ${modelo.medida}`;
+    document.querySelector('#imprimir small').textContent = `tamanho real ${modelo.medida}`;
+    estilo.textContent = `@media print { @page { size: ${modelo.w}mm ${modelo.h}mm; margin: 0 } .etiqueta img { width: ${modelo.w}mm !important; height: ${modelo.h}mm !important; max-height: none !important } }`;
   };
+
+  document.getElementById('modelos').innerHTML = MODELOS
+    .map((m, i) => `<button type="button" data-k="${i}" class="${i ? '' : 'sel'}">${m.nome}<small>${m.medida}</small></button>`).join('');
+  document.getElementById('modelos').addEventListener('click', (e) => {
+    const b = e.target.closest('button');
+    if (!b) return;
+    modelo = MODELOS[+b.dataset.k];
+    document.querySelectorAll('#modelos button').forEach((x) => x.classList.toggle('sel', x === b));
+    aplicar(livre ? '-livre' : '');
+  });
   let livre = false;
   try {
     const { fs, db: banco } = await db();
@@ -93,7 +130,7 @@
     img.hidden = true;
     const f = document.getElementById('falta');
     f.innerHTML = slug
-      ? `A etiqueta desta peça ainda não foi gerada. Rode <code>node tools/qr.mjs ${slug}</code> no repositório e publique.`
+      ? `Este modelo ainda não foi gerado para esta peça. Rode <code>node tools/qr.mjs ${slug}</code> e <code>node tools/qr-modelos.mjs ${slug}</code> no repositório e publique.`
       : 'Nenhuma peça informada.';
     f.hidden = false;
     document.querySelectorAll('.acoes').forEach((el) => { el.hidden = true; });

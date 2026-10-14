@@ -37,6 +37,16 @@ git add -A && git commit -m "Página <peça>" && git push
 e `etiqueta.pdf` / `etiqueta.png` (etiqueta pronta 10 × 15 cm, 300 dpi), mais `etiqueta-livre.pdf` / `.png` sem o passo da senha
 (o link "Etiqueta QR" do painel mostra essa quando a página está com acesso livre).
 
+`tools/qr-modelos.mjs` grava os **modelos pequenos** na mesma pasta, em PDF (vetor) e PNG 300 dpi:
+`cartao-60x90` (6 × 9 cm, com os passos), `selo-50` (5 × 5 cm), `tira-70x30` (7 × 3 cm, para testeira e lateral)
+e `mini-35` (3,5 × 3,5 cm, o menor que ainda lê bem). Com `--livre` sai a versão sem o passo da senha.
+No painel, a tela "Etiqueta QR" troca de modelo num clique e imprime no tamanho certo.
+
+```bash
+node tools/qr-modelos.mjs <pasta>            # modelos pequenos
+node tools/qr-modelos.mjs <pasta> --livre    # versão sem o passo da senha
+```
+
 ### O JSON da página
 
 Fica em `<script type="application/json" id="projeto">` dentro do `index.html`. Bloco sem dados some da página.
