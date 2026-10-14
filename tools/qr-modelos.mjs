@@ -40,7 +40,8 @@ const svgQR = (cor = '#0E1110') => `<svg xmlns="http://www.w3.org/2000/svg" view
 
 const logo = (f) => `data:image/png;base64,${readFileSync(path.join(raiz, 'assets/img', f)).toString('base64')}`;
 const peca = P.nome;
-const linhaPeca = P.linha && !/^pilhas/i.test(P.linha) ? P.linha : '';
+// o nome do projeto entra em TODOS os modelos: na loja, a etiqueta solta precisa dizer de qual enxoval é
+const identidade = `${P.cliente} · ${P.nome}`;
 const temKit = !!P.kit?.length;
 // a frase é a mesma em todos os modelos: o que o promotor vai fazer do outro lado do código
 const recado = 'Registre a positivação do material';
@@ -78,14 +79,16 @@ const MODELOS = {
       .qr{width:30mm;height:30mm;margin:1.6mm auto .4mm}
       .frase{font-size:6.4pt;line-height:1.2;text-align:center;font-weight:500}
       .pe{margin-top:auto;display:flex;align-items:flex-end;justify-content:space-between;gap:1.5mm}
-      .pe b{font-size:6.2pt;font-weight:600;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+      .pe span{min-width:0}
+      .pe small{display:block;font-size:4.6pt;letter-spacing:.8pt;color:#54594E}
+      .pe b{display:block;font-size:6.2pt;font-weight:600;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
       .pe i{font-style:normal;background:#C0EE4E;font-size:4.6pt;padding:.6mm 1.4mm;letter-spacing:.6pt;white-space:nowrap;flex:none}
     `,
     corpo: `
       <div class="top"><img src="${logo('logo-75lab-preto.png')}" alt="75 LAB"><span class="anton">Aponte a câmera</span></div>
       <div class="qr">${svgQR()}</div>
       <p class="frase">${esc(recado)}</p>
-      <div class="pe"><b>${esc(peca)}</b><i class="anton">75 LAB</i></div>`,
+      <div class="pe"><span><small class="anton">${esc(P.cliente)}</small><b>${esc(peca)}</b></span><i class="anton">75 LAB</i></div>`,
   },
   // 70 × 30 mm: faixa para testeira, lateral de display e embalagem estreita.
   'tira-70x30': {
@@ -104,7 +107,7 @@ const MODELOS = {
       <div class="txt">
         <h1 class="anton">Monte<br>do jeito certo</h1>
         <p>${esc(recado)}</p>
-        <small>${esc(peca)}</small>
+        <small>${esc(identidade)}</small>
         <img src="${logo('logo-75lab-preto.png')}" alt="75 LAB">
       </div>`,
   },
@@ -113,13 +116,15 @@ const MODELOS = {
     w: 35, h: 35,
     css: `
       body{flex-direction:column;align-items:center;padding:2.2mm}
-      .qr{width:26mm;height:26mm}
-      .frase{font-size:5.4pt;font-weight:600;margin-top:.8mm;letter-spacing:.2pt}
+      .qr{width:24mm;height:24mm}
+      .frase{font-size:5pt;font-weight:600;margin-top:.7mm;letter-spacing:.2pt}
       .frase i{font-style:normal;color:#9AA08F;font-weight:400}
+      .proj{font-size:4.4pt;font-weight:500;margin-top:.5mm;text-align:center;line-height:1.1;max-width:30mm}
     `,
     corpo: `
       <div class="qr">${svgQR()}</div>
-      <p class="frase anton">Positivação <i>· 75 LAB</i></p>`,
+      <p class="frase anton">Positivação <i>· 75 LAB</i></p>
+      <p class="proj">${esc(identidade)}</p>`,
   },
   // 60 × 90 mm: a etiqueta completa, com os passos, na metade do tamanho da original.
   'cartao-60x90': {
