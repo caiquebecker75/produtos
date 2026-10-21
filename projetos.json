@@ -2,7 +2,7 @@
   {
     "slug": "pokemon-pdv",
     "cliente": "Pokémon",
-    "nome": "Peças de PDV",
+    "nome": "Peças de PDV Pokémon",
     "cor": "#FFCB05",
     "sigla": "PK",
     "criado": "2026-10-21"
@@ -10,7 +10,7 @@
   {
     "slug": "getpower-pdv",
     "cliente": "GETPOWER",
-    "nome": "Peças de PDV",
+    "nome": "Peças de PDV GETPOWER",
     "cor": "#F07A1A",
     "sigla": "GP",
     "criado": "2026-10-14"

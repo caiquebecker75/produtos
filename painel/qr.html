@@ -141,7 +141,8 @@
     if (!p) return;
     document.title = `Etiqueta QR · ${p.nome}`;
     const esc = (t) => String(t || '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-    document.getElementById('titulo').innerHTML = `${esc(p.nome)} <b>${esc(p.cliente)}</b>`;
+    const repete = p.nome.toLowerCase().includes((p.cliente || '').toLowerCase());
+    document.getElementById('titulo').innerHTML = repete ? esc(p.nome) : `${esc(p.nome)} <b>${esc(p.cliente)}</b>`;
   }).catch(() => {});
 </script>
 </body>
