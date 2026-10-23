@@ -41,7 +41,7 @@ function capa(sel) {
     <div class="hero-card">
       <div class="hero-txt">
         ${P.logoCliente ? `<img class="cliente-logo" src="${esc(P.logoCliente)}" alt="${esc(P.cliente)}">` : `<div class="cliente-nome">${esc(P.cliente)}</div>`}
-        <h1>${esc(P.nome)}${P.linha ? ` <b>${esc(P.linha)}</b>` : ''}</h1>
+        <h1${P.tituloTamanho ? ` style="font-size:${esc(P.tituloTamanho)}"` : ''}>${esc(P.nome)}${P.linha ? ` <b>${esc(P.linha)}</b>` : ''}</h1>
         <p class="sub">${esc(P.subtitulo || 'Treinamento de montagem')}</p>
         ${P.tipo ? `<p class="tipo">${esc(P.tipo)}</p>` : ''}
         ${dims ? `<div class="dims">${dims}</div>` : ''}
@@ -198,7 +198,7 @@ function ar(X, pre, nav) {
             interaction-prompt="none" shadow-intensity="1.1" shadow-softness="0.9" environment-image="neutral" exposure="1.05" loading="lazy">
             <button slot="ar-button" hidden></button>
             <div slot="progress-bar"></div>
-            <div slot="ar-prompt" class="ar-prompt">Aponte para ${a.posicionamento === 'wall' ? 'a <b>parede ou gôndola</b>' : 'o <b>chão</b>'} e mova o celular devagar</div>
+            <div slot="ar-prompt" class="ar-prompt">Aponte para ${a.superficie ? md(a.superficie) : a.posicionamento === 'wall' ? 'a <b>parede ou gôndola</b>' : 'o <b>chão</b>'} e mova o celular devagar</div>
           </model-viewer>
           <div class="drag">${ICON.girar}Arraste para girar</div>
           <div class="progress"><i></i></div>
@@ -207,7 +207,7 @@ function ar(X, pre, nav) {
           <div class="ar-mobile">
             <button class="cta cta-ar" type="button" disabled>${ICON.ar}<span>Carregando 3D</span></button>
             <ul class="ar-dicas">
-              <li><span>1</span>Vá até o ponto onde a peça vai ficar e aponte a câmera para ${a.posicionamento === 'wall' ? 'a superfície' : 'o chão'}.</li>
+              <li><span>1</span>Vá até o ponto onde a peça vai ficar e aponte a câmera para ${a.superficie ? md(a.superficie) : a.posicionamento === 'wall' ? 'a superfície' : 'o chão'}.</li>
               <li><span>2</span>Mova o celular devagar até a peça aparecer, em tamanho real.</li>
               <li><span>3</span>Ande ao redor: confira corredor, altura e se nada tampa a visão do shopper.</li>
             </ul>
@@ -439,7 +439,8 @@ async function iniciarAR(sec, X) {
 
   if (!isMobile) {
     painel('desktop');
-    await import(new URL('../vendor/qrcode.min.js', import.meta.url).href).catch(() => {});
+    // a biblioteca declara 'var qrcode' no escopo global: como módulo (import) ela não aparece em window
+    if (!window.qrcode) await new Promise((ok) => { const sc = document.createElement('script'); sc.src = new URL('../vendor/qrcode.min.js', import.meta.url).href; sc.onload = sc.onerror = ok; document.head.appendChild(sc); });
     if (window.qrcode) {
       const qr = window.qrcode(0, 'M');
       qr.addData(link);
