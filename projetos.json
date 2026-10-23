@@ -266,7 +266,7 @@
   {
     "slug": "savencia-display-pp-polenguinho",
     "cliente": "Savencia Fromage & Dairy",
-    "nome": "Displays Polenguinho",
+    "nome": "Enxoval Polenguinho",
     "criado": "2026-09-15",
     "cor": "#2F6BFF",
     "sigla": "PP",
@@ -278,6 +278,22 @@
       {
         "id": "m",
         "nome": "Display M"
+      },
+      {
+        "id": "clipstrip",
+        "nome": "Clip Strip"
+      },
+      {
+        "id": "checkout",
+        "nome": "Display Checkout"
+      },
+      {
+        "id": "pe-galinha",
+        "nome": "Pé de Galinha"
+      },
+      {
+        "id": "triedro",
+        "nome": "Triedro"
       }
     ]
   },
