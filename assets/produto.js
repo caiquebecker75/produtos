@@ -6,6 +6,7 @@
 import { iniciarRegistro } from './registro.js?v=10';
 import { exigirSenha, pecasDesligadas, telaSemPecas } from './acesso.js?v=4';
 import { escolherPecas } from './selecao.js?v=2';
+import { modoEquipe, tarjaEquipe } from './equipe.js?v=1';
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -548,10 +549,13 @@ function iniciarCapitulos(sec) {
 })();
 
 // ---------------------------------------------------------------- fluxo: senha → peças (enxoval) → página → registro
-const senhaHash = await exigirSenha(P);
+// prévia da equipe (botão "Abrir página" do painel): pula senha, escolha de peças e registro obrigatório
+const EQUIPE = modoEquipe();
+const senhaHash = EQUIPE ? (() => { try { return localStorage.getItem(`acesso75:${P.slug}`); } catch { return null; } })() : await exigirSenha(P);
 
 // peças desabilitadas no painel somem da escolha, da página e do registro (KIT e P.kit são o mesmo array)
-if (KIT) {
+// na prévia da equipe a página mostra o enxoval inteiro, inclusive o que está desabilitado
+if (KIT && !EQUIPE) {
   const off = pecasDesligadas(P.slug);
   for (let i = KIT.length - 1; i >= 0; i--) if (off.includes(KIT[i].id)) KIT.splice(i, 1);
   if (!KIT.length) {
@@ -576,7 +580,8 @@ if (KIT) {
   try { anterior = validas(JSON.parse(localStorage.getItem(chaveSel) || '[]')); } catch {}
   // link com ?pecas= (ex.: QR do AR de uma peça) abre direto; QR do enxoval sempre pergunta
   // só uma peça habilitada: não há o que escolher
-  const sel = KIT.length === 1 ? [KIT[0].id]
+  const sel = EQUIPE ? (daUrl.length ? daUrl : KIT.map((x) => x.id))
+    : KIT.length === 1 ? [KIT[0].id]
     : daUrl.length && !new URLSearchParams(location.search).has('qr') ? daUrl : await escolherPecas(P, { inicial: daUrl.length ? daUrl : anterior });
   guardarSelecao(sel);
 }
@@ -590,10 +595,11 @@ const registro = iniciarRegistro(P, {
 });
 
 // registro obrigatório antes de abrir a página (QR ou link): pula só se este aparelho já registrou estas peças nas últimas 12 h
-await registro.exigir();
+if (!EQUIPE) await registro.exigir();
 renderizar(selecionadas);
 montada = true;
 registro.atualizarBotao();
+if (EQUIPE) tarjaEquipe(EQUIPE, { pecas: selecionadas.length, total: KIT ? KIT.length : 0 });
 
 async function trocar() {
   const sel = await escolherPecas(P, { inicial: selecionadas, cancelavel: true });
@@ -604,6 +610,6 @@ async function trocar() {
   registro.atualizarBotao();
   window.scrollTo({ top: 0, behavior: 'instant' });
   toast(`Página com ${sel.length} peça${sel.length > 1 ? 's' : ''}.`);
-  if (!registro.jaRegistrou()) registro.abrir(); // peça que ainda não foi registrada nesta loja
+  if (!EQUIPE && !registro.jaRegistrou()) registro.abrir(); // peça que ainda não foi registrada nesta loja
 }
 document.addEventListener('click', (e) => { if (e.target.closest('[data-trocar-pecas]') && !e.target.closest('.sheet')) trocar(); });

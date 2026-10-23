@@ -4,6 +4,7 @@ import { hashSenha, normalizarSenha } from '../assets/senha.js?v=1';
 import { estiloProjeto, htmlMarcador } from './marcadores.js?v=1';
 import { desenhar as desenharIntel, desenharFachadas, completarCidades } from './inteligencia.js?v=3';
 import { iniciarLinks, pararLinks } from './links.js?v=2';
+import { marcarEquipe } from '../assets/equipe.js?v=1';
 
 const [{ initializeApp }, A, F] = await Promise.all([
   import(`${FIREBASE_SDK}/firebase-app.js`),
@@ -18,6 +19,13 @@ const DOMINIO = '@75lab.com.br';
 const BASE_PAGINAS = new URL('../', location.href).href;
 
 const $ = (s) => document.querySelector(s);
+const IC = {
+  abrir: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6"/><path d="M20 4 11 13"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></svg>',
+  qr: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14h1M14 20h3M20 17v4" stroke-linecap="round"/></svg>',
+  ajustes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-1.8-.3 1.6 1.6 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1A1.6 1.6 0 0 0 9 19.4a1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0 .3-1.8 1.6 1.6 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.6 1.6 0 0 0 4.6 9a1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H9a1.6 1.6 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V9a1.6 1.6 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1z"/></svg>',
+  filtro: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h18l-7 8v6l-4 2v-8z"/></svg>',
+  olho: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>',
+};
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const telFmt = (d) => (d?.length === 11 ? `(${d.slice(0, 2)}) ${d.slice(2, 7)}-${d.slice(7)}` : d?.length === 10 ? `(${d.slice(0, 2)}) ${d.slice(2, 6)}-${d.slice(6)}` : d || '');
 const dataFmt = (dt) => dt ? dt.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }) : 'enviando…';
@@ -72,6 +80,7 @@ A.onAuthStateChanged(auth, async (user) => {
   }
   $('#usuario').textContent = user.email;
   usuarioEmail = user.email;
+  marcarEquipe(user.email); // libera a prévia das páginas neste navegador por 12 h
   telas('painel');
   iniciar();
 });
@@ -211,28 +220,93 @@ function desenhar() {
   $('#lista-projetos').innerHTML = slugs.map((s) => {
     const p = nomeProjeto(s);
     const n = cont[s] || 0;
-    return `<li class="${s === sel ? 'sel' : ''} ${paginas[s]?.ativo === false ? 'off' : ''}">
-      <span class="pn">${htmlMarcador(estiloProjeto(s, catalogo), 22)}${esc(p.nome)}</span><span class="pq">${n}</span>
-      <span class="pc">${esc(p.cliente)}</span>
+    const pag = paginas[s] || {};
+    const fora = pag.ativo === false;
+    const livre = pag.semSenha === true;
+    const bloqueada = !livre && !senhas[s];
+    const kit = catalogo.find((c) => c.slug === s)?.pecas || [];
+    const off = pag.pecasOff || [];
+    const url = `${BASE_PAGINAS}${encodeURIComponent(s)}/`;
+    // contagem de registros por peça do enxoval (vai para o pop-up de ajustes)
+    const cp = {};
+    if (kit.length) base.filter((r) => r.projeto === s).forEach((r) => (r.pecas || []).forEach((id) => { cp[id] = (cp[id] || 0) + 1; }));
+    return `<li class="pj ${s === sel ? 'sel' : ''} ${fora ? 'off' : ''}" data-slug="${esc(s)}">
+      <div class="pj-top">
+        ${htmlMarcador(estiloProjeto(s, catalogo), 30)}
+        <span class="pj-id"><b>${esc(p.nome)}</b><small>${esc(p.cliente)}</small></span>
+        <span class="pj-q">${n}<i>registro${n === 1 ? '' : 's'}</i></span>
+      </div>
       <span class="pbar"><i style="width:${(n / max) * 100}%"></i></span>
-      ${(() => {
-        const kit = catalogo.find((c) => c.slug === s)?.pecas;
-        if (!kit?.length) return '';
-        const cp = {};
-        base.filter((r) => r.projeto === s).forEach((r) => (r.pecas || []).forEach((id) => { cp[id] = (cp[id] || 0) + 1; }));
-        return `<span class="ppecas">${kit.map((pc) => `${esc(pc.nome)} <b>${cp[pc.id] || 0}</b>`).join(' · ')}</span>`;
-      })()}
-      <span class="plinks"><a href="#" data-filtrar="${esc(s)}">Filtrar</a><a href="${BASE_PAGINAS}${encodeURIComponent(s)}/" target="_blank" rel="noopener">Página</a><a href="qr.html?p=${encodeURIComponent(s)}" target="_blank" rel="noopener">Etiqueta QR</a></span>
-      ${linhaStatus(s)}
-      ${linhaPecas(s)}
-      ${linhaAcesso(s)}
-      ${linhaSenha(s)}
+      <div class="pj-selos">
+        <span class="sl ${fora ? 'ruim' : 'bom'}"><i></i>${fora ? 'Fora do ar' : 'No ar'}</span>
+        <span class="sl ${bloqueada ? 'alerta' : ''}">${bloqueada ? 'Sem senha criada' : livre ? 'Abre sem senha' : 'Com senha'}</span>
+        ${kit.length ? `<span class="sl">${kit.length - off.length} de ${kit.length} peças</span>` : ''}
+      </div>
+      <div class="pj-acoes">
+        <a class="bt bt-abrir" href="${url}?equipe=1" target="_blank" rel="noopener" data-abrir="${esc(s)}">${IC.abrir}<span>Abrir página</span></a>
+        <a class="bt bt-qr" href="qr.html?p=${encodeURIComponent(s)}" target="_blank" rel="noopener">${IC.qr}<span>Etiqueta QR</span></a>
+        <button type="button" class="bt bt-ic" data-cfg="${esc(s)}" title="Ajustes da página" aria-label="Ajustes da página">${IC.ajustes}</button>
+        <button type="button" class="bt bt-ic ${s === sel ? 'on' : ''}" data-filtrar="${esc(s)}" title="${s === sel ? 'Tirar o filtro' : 'Ver só este projeto'}" aria-label="Filtrar por este projeto">${IC.filtro}</button>
+      </div>
+      <dialog class="modal" data-cfg-de="${esc(s)}">
+        <div class="modal-in">
+          <div class="modal-top">
+            <h3>${esc(p.nome)}</h3>
+            <button type="button" class="modal-x" data-cfg-fechar aria-label="Fechar">×</button>
+          </div>
+          <p class="cfg-sub">${esc(p.cliente)} · <a href="${url}" target="_blank" rel="noopener">${esc(url.replace(/^https?:\/\//, ''))}</a></p>
+          <div class="cfg-blocos">
+            ${linhaStatus(s)}
+            ${linhaAcesso(s)}
+            ${linhaSenha(s)}
+            ${linhaPecas(s)}
+            ${kit.length ? `<div class="cfg-cont"><span class="rot">Registros por peça</span><span class="ppecas">${kit.map((pc) => `${esc(pc.nome)} <b>${cp[pc.id] || 0}</b>`).join(' · ')}</span></div>` : ''}
+          </div>
+          <div class="modal-acoes">
+            <a class="bt bt-abrir" href="${url}?equipe=1" target="_blank" rel="noopener" data-abrir="${esc(s)}">${IC.abrir}<span>Abrir página</span></a>
+            <a class="bt bt-qr" href="qr.html?p=${encodeURIComponent(s)}" target="_blank" rel="noopener">${IC.qr}<span>Etiqueta QR</span></a>
+            <button type="button" class="btn-mini contorno" data-cfg-fechar>Fechar</button>
+          </div>
+        </div>
+      </dialog>
     </li>`;
   }).join('') || '<li class="pc">Nenhum projeto ainda.</li>';
+  if (cfgAberto) abrirCfg(cfgAberto, true);
 
   desenharMapa(lista);
   desenharInteligencia(lista);
 }
+
+// ------------------------------------------------- pop-up de ajustes da página
+// o card da lista fica limpo (nome, estado e os dois botões grandes); no ar, acesso, senha e peças ficam aqui dentro
+let cfgAberto = null;
+function abrirCfg(slug) {
+  const d = document.querySelector(`[data-cfg-de="${CSS.escape(slug)}"]`);
+  if (!d) return;
+  cfgAberto = slug;
+  if (!d.open) d.showModal();
+}
+function fecharCfg() {
+  cfgAberto = null;
+  editando = null;
+  document.querySelectorAll('[data-cfg-de][open]').forEach((d) => d.close());
+}
+$('#lista-projetos').addEventListener('click', (e) => {
+  const abre = e.target.closest('[data-cfg]');
+  if (abre) return abrirCfg(abre.dataset.cfg);
+  if (e.target.closest('[data-cfg-fechar]')) { fecharCfg(); desenhar(); }
+});
+// o pop-up fecha só no X ou no Fechar (o Esc e o clique fora não fecham sem querer)
+$('#lista-projetos').addEventListener('cancel', (e) => e.preventDefault(), true);
+
+// "Abrir página": leva a senha atual e a marca da equipe para este navegador, e a página abre pronta
+$('#lista-projetos').addEventListener('click', (e) => {
+  const a = e.target.closest('[data-abrir]');
+  if (!a) return;
+  marcarEquipe(usuarioEmail);
+  const hash = senhas[a.dataset.abrir]?.hash;
+  if (hash) { try { localStorage.setItem(`acesso75:${a.dataset.abrir}`, hash); } catch {} }
+});
 
 // ------------------------------------------------- inteligência de PDV
 let recorteAtual = 'bandeira';
@@ -244,17 +318,52 @@ function desenharInteligencia(lista) {
   clearTimeout(fachadasT);
   fachadasT = setTimeout(() => desenharFachadas({ lista, F, db, dataFmt, nomeProjeto }).catch((e) => console.error('fachadas', e)), 250);
 }
-// as fotos ficam minimizadas (tira de miniaturas); o botão amplia e a escolha fica guardada
-const blocoFachadas = $('#intel-fachadas-bloco');
-const btnFachadas = $('#intel-fachadas-abrir');
-function ajustarFachadas(aberto) {
-  blocoFachadas.dataset.aberto = aberto ? '1' : '0';
-  btnFachadas.textContent = aberto ? 'Minimizar fotos' : 'Ampliar fotos';
-  btnFachadas.setAttribute('aria-expanded', aberto ? 'true' : 'false');
-  try { localStorage.setItem('painel-fachadas', aberto ? '1' : '0'); } catch {}
-}
-btnFachadas.addEventListener('click', () => ajustarFachadas(blocoFachadas.dataset.aberto !== '1'));
-ajustarFachadas((() => { try { return localStorage.getItem('painel-fachadas') === '1'; } catch { return false; } })());
+// ---------------------------------------------------------------- janelas da inteligência
+// a home mostra o essencial; cada quadro denso (funil, horários, cruzamento, promotores, fotos)
+// mora numa janela. O bloco não é copiado: ele sai do lugar, entra na janela e volta ao fechar.
+(function () {
+  const pop = $('#pop');
+  const corpo = $('#pop-corpo');
+  const blocos = [...document.querySelectorAll('[data-popup]')];
+  let dentro = null;
+  let marca = null;
+
+  $('#intel-lupas').innerHTML = blocos
+    .map((b, i) => (b.dataset.popupFora ? '' : `<button type="button" class="lupa" data-pop="${i}">
+      <span><b>${esc(b.dataset.popup)}</b><small>${esc(b.dataset.popupDica || '')}</small></span>${IC.olho}</button>`))
+    .join('');
+
+  function abrir(i) {
+    if (dentro) fechar();
+    const b = blocos[i];
+    if (!b) return;
+    marca = document.createComment('bloco');
+    b.replaceWith(marca);
+    corpo.appendChild(b);
+    if (b.id === 'intel-fachadas-bloco') b.dataset.aberto = '1'; // na janela as fotos abrem em grade
+    $('#pop-tit').textContent = b.dataset.popup;
+    dentro = b;
+    pop.showModal();
+    corpo.parentElement.scrollTop = 0;
+  }
+  function fechar() {
+    if (dentro && marca) {
+      if (dentro.id === 'intel-fachadas-bloco') dentro.dataset.aberto = '0';
+      marca.replaceWith(dentro);
+    }
+    dentro = null;
+    marca = null;
+    pop.close();
+  }
+  $('#intel-lupas').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-pop]');
+    if (b) abrir(Number(b.dataset.pop));
+  });
+  $('#intel-fachadas-abrir').addEventListener('click', () => abrir(blocos.findIndex((b) => b.id === 'intel-fachadas-bloco')));
+  $('#pop-x').addEventListener('click', fechar);
+  $('#pop-fechar').addEventListener('click', fechar);
+  pop.addEventListener('cancel', (e) => e.preventDefault()); // fecha só no X ou no Fechar
+})();
 
 $('#intel-abas').addEventListener('click', (e) => {
   const b = e.target.closest('[data-recorte]');

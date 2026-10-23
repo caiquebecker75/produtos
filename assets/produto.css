@@ -430,3 +430,25 @@ section { position: relative; }
 .foto-box[data-estado="lendo"] .foto-vazio b::after { content: " · lendo…"; font-weight: 400; }
 .foto-box[data-estado="erro"] .foto-vazio b::after { content: " · não abriu, tente de novo"; font-weight: 400; color: #B3261E; }
 .foto-box[aria-invalid="true"] { background: #FBE3DF; }
+
+/* ---------- prévia da equipe (abriu pelo painel) ---------- */
+:root { --tarja-h: 0px; }
+.com-tarja { --tarja-h: 42px; }
+.com-tarja body { padding-top: var(--tarja-h); }
+.com-tarja .top { top: var(--tarja-h); }
+.com-tarja .faixa-reg { display: none; }
+.tarja-equipe {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 70; height: var(--tarja-h);
+  background: var(--ink); color: #fff; display: flex; align-items: center; gap: 12px;
+  padding: 0 14px; font-size: 13px; overflow: hidden;
+}
+.tarja-equipe .te-selo { font-family: var(--anton); font-size: 11.5px; letter-spacing: 1.8px; text-transform: uppercase; background: var(--lime); color: var(--ink); border-radius: 20px; padding: 4px 11px; flex: none; }
+.tarja-equipe .te-txt { color: #C8CDBF; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tarja-equipe .te-btn { margin-left: auto; flex: none; background: #1B201D; color: #fff; text-decoration: none; border-radius: 20px; padding: 6px 13px; font-size: 12.5px; }
+.tarja-equipe .te-btn:hover { background: #2A302B; }
+.tarja-equipe .te-quem { flex: none; color: #7E8476; font-size: 12px; }
+@media (max-width: 760px) {
+  .tarja-equipe .te-txt, .tarja-equipe .te-quem { display: none; }
+  .tarja-equipe .te-btn { margin-left: auto; }
+}
+@media print { .tarja-equipe { display: none !important; } .com-tarja body { padding-top: 0; } }

@@ -11,10 +11,10 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Lexend:wght@200;300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<link rel="stylesheet" href="painel.css?v=14">
+<link rel="stylesheet" href="painel.css?v=15">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script defer src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
-<script type="module" src="painel.js?v=12"></script>
+<script type="module" src="painel.js?v=13"></script>
 </head>
 <body>
 
@@ -81,55 +81,55 @@
         </div>
       </div>
 
-      <div class="intel-cols mt">
-        <div class="intel-bloco">
-          <div class="intel-top">
-            <h3>Positivação por</h3>
-            <div class="abas" id="intel-abas">
-              <button type="button" class="aba sel" data-recorte="bandeira">Rede</button>
-              <button type="button" class="aba" data-recorte="cidade">Cidade</button>
-              <button type="button" class="aba" data-recorte="uf">Estado</button>
-              <button type="button" class="aba" data-recorte="projeto">Projeto</button>
-              <button type="button" class="aba" data-recorte="promotor">Promotor</button>
-            </div>
+      <div class="intel-bloco mt">
+        <div class="intel-top">
+          <h3>Positivação por</h3>
+          <div class="abas" id="intel-abas">
+            <button type="button" class="aba sel" data-recorte="bandeira">Rede</button>
+            <button type="button" class="aba" data-recorte="cidade">Cidade</button>
+            <button type="button" class="aba" data-recorte="uf">Estado</button>
+            <button type="button" class="aba" data-recorte="projeto">Projeto</button>
+            <button type="button" class="aba" data-recorte="promotor">Promotor</button>
           </div>
-          <div id="intel-barras"></div>
-          <details class="detalhe">
-            <summary>Ver a tabela completa</summary>
-            <div class="tabela-wrap"><table class="tabela intel-tabela" id="intel-tabela"></table></div>
-          </details>
         </div>
-        <div class="intel-bloco">
-          <h3>Promotor próprio e compartilhado</h3>
-          <div id="intel-donut"></div>
-          <div class="tipos" id="intel-tipos"></div>
-        </div>
+        <div id="intel-barras"></div>
+        <details class="detalhe">
+          <summary>Ver a tabela completa</summary>
+          <div class="tabela-wrap"><table class="tabela intel-tabela" id="intel-tabela"></table></div>
+        </details>
       </div>
 
-      <div class="intel-cols mt">
-        <div class="intel-bloco">
+      <!-- as leituras mais densas ficam guardadas: cada botão abre o quadro inteiro numa janela -->
+      <div class="lupas" id="intel-lupas"></div>
+
+      <div class="intel-bloco fachadas-bloco mt" id="intel-fachadas-bloco" data-aberto="0" data-popup="Fachadas registradas" data-popup-fora="1">
+        <div class="intel-top">
+          <h3>Fachadas registradas</h3>
+          <span class="dica" id="intel-fachadas-dica"></span>
+          <button type="button" class="btn-min" id="intel-fachadas-abrir">Ver todas as fotos</button>
+        </div>
+        <div class="fachadas" id="intel-fachadas"></div>
+      </div>
+
+      <div id="intel-guardados" hidden>
+        <div class="intel-bloco" data-popup="Do QR à loja auditada" data-popup-dica="Quantos escaneiam, registram e mandam foto">
           <h3>Do QR à loja auditada</h3>
           <div id="intel-funil"></div>
         </div>
-        <div class="intel-bloco">
+        <div class="intel-bloco" data-popup="Quando o campo acontece" data-popup-dica="Dia da semana e faixa de horário">
           <h3>Quando o campo acontece</h3>
           <div id="intel-heat"></div>
           <p class="dica mt-s">Registros por dia da semana e faixa de horário.</p>
         </div>
-      </div>
-
-      <div class="intel-bloco mt">
-        <div class="intel-top"><h3>Rede × projeto</h3><span class="dica">Lojas positivadas em cada cruzamento</span></div>
-        <div id="intel-matriz"></div>
-      </div>
-
-      <div class="intel-bloco fachadas-bloco mt" id="intel-fachadas-bloco" data-aberto="0">
-        <div class="intel-top">
-          <h3>Fachadas registradas</h3>
-          <span class="dica" id="intel-fachadas-dica"></span>
-          <button type="button" class="btn-min" id="intel-fachadas-abrir" aria-expanded="false">Ampliar fotos</button>
+        <div class="intel-bloco" data-popup="Promotor próprio e compartilhado" data-popup-dica="Quem está executando nas lojas">
+          <h3>Promotor próprio e compartilhado</h3>
+          <div id="intel-donut"></div>
+          <div class="tipos" id="intel-tipos"></div>
         </div>
-        <div class="fachadas" id="intel-fachadas"></div>
+        <div class="intel-bloco" data-popup="Rede × projeto" data-popup-dica="Lojas positivadas em cada cruzamento">
+          <h3>Rede × projeto</h3>
+          <div id="intel-matriz"></div>
+        </div>
       </div>
     </section>
 
@@ -140,7 +140,7 @@
         <div class="legenda" id="legenda"></div>
       </div>
       <div class="card">
-        <div class="card-top"><h2>Projetos e senhas</h2><span class="dica">No ar, fora do ar e senha de cada página</span></div>
+        <div class="card-top"><h2>Páginas e QR code</h2><span class="dica">Abra a página, imprima a etiqueta e ajuste o que quiser</span></div>
         <ul class="projetos" id="lista-projetos"></ul>
       </div>
     </section>
@@ -150,7 +150,7 @@
         <h2>Links para o cliente</h2>
         <span class="dica"><span id="links-dica"></span> · acompanhamento ao vivo, sem login</span>
       </div>
-      <p class="links-intro">Escolha a campanha e saia com um endereço público: quem tem o link vê a execução atualizando sozinha, sem senha e sem conta. Dá para bloquear, editar e apagar quando quiser.</p>
+      <p class="links-intro">Escolha a campanha e saia com um endereço público: quem tem o link vê a execução atualizando sozinha, sem senha e sem conta.</p>
       <button type="button" class="btn-lime" id="link-novo">Criar link</button>
       <ul class="links" id="lista-links"></ul>
     </section>
@@ -213,6 +213,17 @@
       <button type="submit" class="btn-lime">Salvar link</button>
     </div>
   </form>
+</dialog>
+
+<dialog class="modal largo" id="pop">
+  <div class="modal-in">
+    <div class="modal-top">
+      <h3 id="pop-tit"></h3>
+      <button type="button" class="modal-x" id="pop-x" aria-label="Fechar">×</button>
+    </div>
+    <div id="pop-corpo"></div>
+    <div class="modal-acoes"><button type="button" class="btn-mini contorno" id="pop-fechar">Fechar</button></div>
+  </div>
 </dialog>
 
 <div class="toast" role="status" aria-live="polite"></div>
