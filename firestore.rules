@@ -201,6 +201,22 @@ service cloud.firestore {
       allow delete: if equipe75();
     }
 
+    /* ---------------------------------------------------------------- pulso das páginas
+       acessos/{id}: um carimbo por etapa (abriu, senha, senha-ok, fora-do-ar, peças, registro,
+       registrou), sem nada pessoal. É o que mostra quando alguém escaneia o QR e não termina
+       o registro. Qualquer um cria (a página é pública), só a equipe lê e limpa. */
+    match /acessos/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['projeto', 'etapa', 'origem', 'sessao', 'so', 'criadoEm'])
+        && slugValido(request.resource.data.projeto)
+        && request.resource.data.etapa in ['abriu', 'senha', 'senha-ok', 'fora-do-ar', 'pecas', 'registro', 'registrou']
+        && request.resource.data.origem in ['qr', 'link', 'equipe']
+        && texto(request.resource.data.sessao, 1, 24)
+        && request.resource.data.so in ['iOS', 'Android', 'outro']
+        && request.resource.data.criadoEm == request.time;
+      allow get, list, delete: if equipe75();
+      allow update: if false;
+    }
+
     match /{doc=**} {
       allow read, write: if false;
     }

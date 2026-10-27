@@ -3,6 +3,7 @@
 // que só a equipe 75 LAB lê no painel (/painel/). No enxoval, grava também as peças executadas.
 import { db } from './base.js?v=1';
 import { chaveAcesso, chaveLivre } from './acesso.js?v=4';
+import { pulso } from './pulso.js?v=1';
 
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -278,6 +279,7 @@ export function iniciarRegistro(P, { toast, ICON, senhaHash, pecas = () => [], n
           catch (e) { console.error(e); await new Promise((r) => setTimeout(r, 1500 * (t + 1))); }
         }
         gravar(chaveReg, { loja, quando: Date.now(), pecas: lista });
+        pulso(P.slug, 'registrou');
         if (veioDoQR) {
           const u = new URL(location.href);
           u.searchParams.delete('qr');

@@ -6,6 +6,7 @@
 // Depois de acertar, o aparelho guarda o hash e só pede de novo se a senha for trocada no painel.
 import { db } from './base.js?v=1';
 import { hashSenha } from './senha.js?v=1';
+import { pulso } from './pulso.js?v=1';
 
 const $ = (s, el = document) => el.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -69,6 +70,7 @@ function cabecalho(P) {
 }
 
 function telaForaDoAr(tela, P) {
+  pulso(P.slug, 'fora-do-ar');
   tela.innerHTML = `
     <div class="porta-card">
       ${cabecalho(P)}
@@ -106,6 +108,7 @@ export async function exigirSenha(P) {
   }
 
   return new Promise((resolve) => {
+    pulso(P.slug, 'senha'); // a pessoa chegou na porta: se parar aqui, é senha que está barrando
     tela.innerHTML = `
       <form class="porta-card" novalidate>
         ${cabecalho(P)}
@@ -149,6 +152,7 @@ export async function exigirSenha(P) {
       try {
         const hash = await hashSenha(P.slug, input.value);
         if (await conferir(P.slug, hash)) {
+          pulso(P.slug, 'senha-ok');
           gravar(chave, hash);
           tela.remove();
           return resolve(hash);

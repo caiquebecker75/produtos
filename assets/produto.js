@@ -7,6 +7,7 @@ import { iniciarRegistro } from './registro.js?v=10';
 import { exigirSenha, pecasDesligadas, telaSemPecas } from './acesso.js?v=4';
 import { escolherPecas } from './selecao.js?v=2';
 import { modoEquipe, tarjaEquipe } from './equipe.js?v=1';
+import { pulso } from './pulso.js?v=1';
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => [...el.querySelectorAll(s)];
@@ -551,6 +552,7 @@ function iniciarCapitulos(sec) {
 // ---------------------------------------------------------------- fluxo: senha → peças (enxoval) → página → registro
 // prévia da equipe (botão "Abrir página" do painel): pula senha, escolha de peças e registro obrigatório
 const EQUIPE = modoEquipe();
+pulso(P.slug, 'abriu'); // marca a abertura antes de qualquer tela (é o que prova que escanearam)
 const senhaHash = EQUIPE ? (() => { try { return localStorage.getItem(`acesso75:${P.slug}`); } catch { return null; } })() : await exigirSenha(P);
 
 // peças desabilitadas no painel somem da escolha, da página e do registro (KIT e P.kit são o mesmo array)
@@ -582,7 +584,7 @@ if (KIT) {
   // só uma peça habilitada: não há o que escolher
   const sel = EQUIPE ? (daUrl.length ? daUrl : KIT.map((x) => x.id))
     : KIT.length === 1 ? [KIT[0].id]
-    : daUrl.length && !new URLSearchParams(location.search).has('qr') ? daUrl : await escolherPecas(P, { inicial: daUrl.length ? daUrl : anterior });
+    : daUrl.length && !new URLSearchParams(location.search).has('qr') ? daUrl : (pulso(P.slug, 'pecas'), await escolherPecas(P, { inicial: daUrl.length ? daUrl : anterior }));
   guardarSelecao(sel);
 }
 
@@ -595,7 +597,7 @@ const registro = iniciarRegistro(P, {
 });
 
 // registro obrigatório antes de abrir a página (QR ou link): pula só se este aparelho já registrou estas peças nas últimas 12 h
-if (!EQUIPE) await registro.exigir();
+if (!EQUIPE) { pulso(P.slug, 'registro'); await registro.exigir(); }
 renderizar(selecionadas);
 montada = true;
 registro.atualizarBotao();

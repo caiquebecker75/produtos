@@ -64,13 +64,15 @@ $('#sair').addEventListener('click', () => A.signOut(auth));
 let pararLeitura = null;
 let pararSenhas = null;
 let pararPaginas = null;
+let pararAcessos = null;
 let usuarioEmail = '';
 A.onAuthStateChanged(auth, async (user) => {
   pararLeitura?.();
   pararSenhas?.();
   pararPaginas?.();
+  pararAcessos?.();
   pararLinks();
-  pararLeitura = pararSenhas = pararPaginas = null;
+  pararLeitura = pararSenhas = pararPaginas = pararAcessos = null;
   if (!user) return telas('login');
   if (!user.email?.toLowerCase().endsWith(DOMINIO) || !user.emailVerified) {
     await A.signOut(auth);
@@ -89,6 +91,7 @@ A.onAuthStateChanged(auth, async (user) => {
 let registros = [];
 let catalogo = [];
 let mapa, camada;
+let acessos = [];         // pulso das páginas: { projeto, etapa, origem, sessao, so, data }
 let paginas = {};         // slug → { ativo, atualizadoEm/Por, semSenha, semSenhaEm/Por, pecasOff[], pecasOffEm/Por }
 let senhas = {};          // slug → { senha, atualizadoEm, atualizadoPor }
 let editando = null;      // slug com o campo de senha aberto
@@ -105,6 +108,18 @@ async function iniciar() {
     paginas = Object.fromEntries(snap.docs.map((d) => [d.id, d.data()]));
     if (!editando) desenhar();
   }, (e) => console.error(e));
+  // pulso das páginas (quem abriu, mesmo sem registrar): só existe a partir de 27/10/2026
+  pararAcessos = F.onSnapshot(
+    F.query(F.collection(db, 'acessos'), F.orderBy('criadoEm', 'desc'), F.limit(5000)),
+    (snap) => {
+      acessos = snap.docs.map((d) => {
+        const a = d.data({ serverTimestamps: 'estimate' });
+        return { ...a, data: a.criadoEm?.toDate?.() || null };
+      });
+      if (!editando) desenhar();
+    },
+    (e) => console.error('acessos', e),
+  );
   pararSenhas = F.onSnapshot(F.collection(db, 'senhas'), (snap) => {
     senhas = Object.fromEntries(snap.docs.map((d) => [d.id, d.data()]));
     if (!editando) desenhar();
@@ -241,6 +256,7 @@ function desenhar() {
         <span class="sl ${fora ? 'ruim' : 'bom'}"><i></i>${fora ? 'Fora do ar' : 'No ar'}</span>
         <span class="sl ${bloqueada ? 'alerta' : ''}">${bloqueada ? 'Sem senha criada' : livre ? 'Abre sem senha' : 'Com senha'}</span>
         ${kit.length ? `<span class="sl">${kit.length - off.length} de ${kit.length} peças</span>` : ''}
+        ${(() => { const a = aberturasDe(s); return a.total ? `<span class="sl ${a.total && !cont[s] ? 'alerta' : ''}">${a.total} leitura${a.total > 1 ? 's' : ''} da página${a.qr ? ` · ${a.qr} por QR` : ''}</span>` : ''; })()}
       </div>
       <div class="pj-acoes">
         <a class="bt bt-abrir" href="${url}?equipe=1" target="_blank" rel="noopener" data-abrir="${esc(s)}">${IC.abrir}<span>Abrir página</span></a>
@@ -275,6 +291,58 @@ function desenhar() {
 
   desenharMapa(lista);
   desenharInteligencia(lista);
+}
+
+// ------------------------------------------------- pulso: quem abriu a página
+// Um registro só aparece no painel quando a pessoa termina o formulário. O pulso conta a ABERTURA,
+// então dá para separar "ninguém escaneou" de "escanearam e desistiram".
+function aberturasDe(slug) {
+  const lista = acessos.filter((a) => a.projeto === slug && a.etapa === 'abriu' && a.origem !== 'equipe');
+  return { total: lista.length, qr: lista.filter((a) => a.origem === 'qr').length, ultima: lista[0]?.data || null };
+}
+
+function desenharLeituras() {
+  const alvo = $('#intel-leituras');
+  if (!alvo) return;
+  if (!acessos.length) {
+    alvo.innerHTML = '<p class="vazio-td">Nenhuma leitura registrada ainda. A medição começou em 27/10/2026: antes dela não dá para saber quem abriu a página sem registrar.</p>';
+    return;
+  }
+  const slugs = [...new Set(acessos.filter((a) => a.origem !== 'equipe').map((a) => a.projeto))];
+  const linhas = slugs.map((slug) => {
+    const meus = acessos.filter((a) => a.projeto === slug && a.origem !== 'equipe');
+    const etapa = (e) => meus.filter((a) => a.etapa === e).length;
+    const sessoes = new Set(meus.map((a) => a.sessao)).size;
+    const abriu = etapa('abriu');
+    const registrou = etapa('registrou');
+    return {
+      slug, abriu, sessoes, registrou,
+      qr: meus.filter((a) => a.etapa === 'abriu' && a.origem === 'qr').length,
+      senha: etapa('senha'),
+      senhaOk: etapa('senha-ok'),
+      fora: etapa('fora-do-ar'),
+      form: etapa('registro'),
+      ios: meus.filter((a) => a.etapa === 'abriu' && a.so === 'iOS').length,
+      ultima: meus[0]?.data || null,
+    };
+  }).sort((a, b) => b.abriu - a.abriu);
+
+  alvo.innerHTML = `
+    <div class="tabela-wrap"><table class="tabela intel-tabela">
+      <thead><tr><th>Página</th><th class="n">Aberturas</th><th class="n">Pelo QR</th><th class="n">Aparelhos</th><th class="n">Parou na senha</th><th class="n">Chegou no formulário</th><th class="n">Registrou</th><th class="n">Conversão</th><th>Última</th></tr></thead>
+      <tbody>${linhas.map((l) => `<tr>
+        <td><b>${esc(nomeProjeto(l.slug).nome)}</b><small>${esc(nomeProjeto(l.slug).cliente)}</small></td>
+        <td class="n">${l.abriu}</td>
+        <td class="n">${l.qr}</td>
+        <td class="n">${l.sessoes}${l.ios ? `<small>${l.ios} iPhone</small>` : ''}</td>
+        <td class="n">${l.senha - l.senhaOk > 0 ? `<b>${l.senha - l.senhaOk}</b>` : '0'}</td>
+        <td class="n">${l.form}</td>
+        <td class="n">${l.registrou}</td>
+        <td class="n">${l.abriu ? Math.round((l.registrou / l.abriu) * 100) + '%' : '-'}</td>
+        <td>${l.ultima ? dataFmt(l.ultima) : ''}</td>
+      </tr>`).join('')}</tbody>
+    </table></div>
+    <p class="dica mt-s">Aberturas conta cada vez que a página carregou (fora as prévias da equipe). "Parou na senha" é quem viu a tela da senha e não passou dela. A medição começou em 27/10/2026.</p>`;
 }
 
 // ------------------------------------------------- pop-up de ajustes da página
@@ -315,6 +383,7 @@ function desenharInteligencia(lista) {
   try {
     desenharIntel({ lista, todos: registros, qual: recorteAtual, nomeProjeto, dataFmt });
   } catch (e) { console.error('inteligência', e); }
+  try { desenharLeituras(); } catch (e) { console.error('leituras', e); }
   clearTimeout(fachadasT);
   fachadasT = setTimeout(() => desenharFachadas({ lista, F, db, dataFmt, nomeProjeto }).catch((e) => console.error('fachadas', e)), 250);
 }
