@@ -12,6 +12,7 @@ import { firebaseConfig, FIREBASE_SDK } from '../assets/firebase-config.js?v=1';
 import { estiloProjeto, htmlMarcador } from '../painel/marcadores.js?v=1';
 import { calcular, recorte, insights, bandeiraDe } from '../painel/inteligencia.js?v=3';
 import * as G from '../painel/graficos.js?v=2';
+import { abrirVisor } from '../assets/visor.js?v=1';
 
 const [{ initializeApp }, F] = await Promise.all([
   import(`${FIREBASE_SDK}/firebase-app.js`),
@@ -256,6 +257,19 @@ async function desenharFachadas(lista) {
       <figcaption><b>${esc(x.loja)}</b><small>${esc(bandeiraDe(x))}${x.cidade ? ` · ${esc(x.cidade)}/${esc(x.uf || '')}` : ''}</small>
         <small>${esc(diaFmt(x.data))}</small></figcaption>
     </figure>`).join('');
+  grade.onclick = (e) => {
+    const b = e.target.closest('[data-ampliar]');
+    if (!b) return;
+    const comImg = comFoto.filter((x) => cacheFoto.get(x.id));
+    const lista = comImg.map((x) => ({
+      src: cacheFoto.get(x.id),
+      titulo: x.loja,
+      subtitulo: [bandeiraDe(x), x.cidade && `${x.cidade}/${x.uf || ''}`.replace(/\/$/, '')].filter(Boolean).join(' · '),
+      arquivo: `fachada-${(x.loja || 'loja').normalize('NFD').replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}.jpg`,
+      rodape: diaFmt(x.data),
+    }));
+    abrirVisor(lista, comImg.findIndex((x) => x.id === b.dataset.ampliar));
+  };
   for (const x of comFoto) {
     const caixa = grade.querySelector(`[data-foto="${CSS.escape(x.id)}"] .fachada-img`);
     if (!caixa) continue;
@@ -266,8 +280,9 @@ async function desenharFachadas(lista) {
         img = snap.exists() ? snap.data().img : null;
         cacheFoto.set(x.id, img);
       }
+      // data: URL em aba nova é bloqueado pelo navegador: amplia no visor
       caixa.innerHTML = img
-        ? `<a href="${img}" target="_blank" rel="noopener"><img src="${img}" alt="Fachada de ${esc(x.loja)}" loading="lazy"></a>`
+        ? `<button type="button" class="fachada-abrir" data-ampliar="${esc(x.id)}"><img src="${img}" alt="Fachada de ${esc(x.loja)}" loading="lazy"></button>`
         : '<span class="dica">foto indisponível</span>';
     } catch {
       caixa.innerHTML = '<span class="dica">foto indisponível</span>';

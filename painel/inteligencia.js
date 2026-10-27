@@ -9,6 +9,7 @@
 // Nominatim (OpenStreetMap) e grava de volta no documento, então o custo é pago uma vez só.
 
 import * as G from './graficos.js?v=2';
+import { abrirVisor } from '../assets/visor.js?v=1';
 
 const RAIO_PDV_M = 150;
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -458,7 +459,24 @@ export async function desenharFachadas({ lista, F, db, dataFmt, nomeProjeto, lim
         <small>${esc(nomeProjeto(r.projeto).nome)}</small>
         <small>${esc(r.nome)} · ${esc(r.data ? dataFmt(r.data) : '')}</small></figcaption>
     </figure>`).join('');
-  for (const r of comFoto.slice(0, limite)) {
+  const mostrados = comFoto.slice(0, limite);
+  grade.onclick = (e) => {
+    const b = e.target.closest('[data-ampliar]');
+    if (!b) return;
+    const lista = mostrados
+      .filter((x) => cacheFoto.get(x.id))
+      .map((x) => ({
+        src: cacheFoto.get(x.id),
+        titulo: x.loja,
+        subtitulo: [bandeiraDe(x), x.cidade && `${x.cidade}/${x.uf || ''}`.replace(/\/$/, ''), nomeProjeto(x.projeto).nome].filter(Boolean).join(' · '),
+        arquivo: `fachada-${(x.loja || 'loja').normalize('NFD').replace(/[^a-zA-Z0-9]+/g, '-').toLowerCase()}.jpg`,
+        mapa: x.geo ? `https://www.google.com/maps?q=${x.geo.lat},${x.geo.lng}` : '',
+        rodape: `${x.nome || ''}${x.data ? ` · ${dataFmt(x.data)}` : ''}`,
+      }));
+    const comImg = mostrados.filter((x) => cacheFoto.get(x.id));
+    abrirVisor(lista, comImg.findIndex((x) => x.id === b.dataset.ampliar));
+  };
+  for (const r of mostrados) {
     const caixa = grade.querySelector(`[data-foto="${CSS.escape(r.id)}"] .fachada-img`);
     if (!caixa) continue;
     try {
@@ -468,8 +486,9 @@ export async function desenharFachadas({ lista, F, db, dataFmt, nomeProjeto, lim
         img = snap.exists() ? snap.data().img : null;
         cacheFoto.set(r.id, img);
       }
+      // nada de abrir data: URL em aba nova (o Chrome bloqueia): a foto amplia no visor
       caixa.innerHTML = img
-        ? `<a href="${img}" target="_blank" rel="noopener"><img src="${img}" alt="Fachada de ${esc(r.loja)}" loading="lazy"></a>`
+        ? `<button type="button" class="fachada-abrir" data-ampliar="${esc(r.id)}"><img src="${img}" alt="Fachada de ${esc(r.loja)}" loading="lazy"></button>`
         : '<span class="dica">foto não encontrada</span>';
     } catch {
       caixa.innerHTML = '<span class="dica">sem acesso à foto</span>';

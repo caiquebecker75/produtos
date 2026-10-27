@@ -596,11 +596,11 @@ const registro = iniciarRegistro(P, {
   trocarPecas: KIT ? () => trocar() : null,
 });
 
-// registro obrigatório antes de abrir a página (QR ou link): pula só se este aparelho já registrou estas peças nas últimas 12 h
-if (!EQUIPE) { pulso(P.slug, 'registro'); await registro.exigir(); }
+// a montagem abre na hora e o registro é pedido no fim do passo a passo (pedido de 27/10)
 renderizar(selecionadas);
 montada = true;
 registro.atualizarBotao();
+if (!EQUIPE) registro.convidarNoFim();
 if (EQUIPE) tarjaEquipe(EQUIPE, { pecas: selecionadas.length, total: KIT ? KIT.length : 0 });
 
 async function trocar() {

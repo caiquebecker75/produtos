@@ -2,7 +2,7 @@
 import { firebaseConfig, FIREBASE_SDK } from '../assets/firebase-config.js?v=1';
 import { hashSenha, normalizarSenha } from '../assets/senha.js?v=1';
 import { estiloProjeto, htmlMarcador } from './marcadores.js?v=1';
-import { desenhar as desenharIntel, desenharFachadas, completarCidades } from './inteligencia.js?v=3';
+import { desenhar as desenharIntel, desenharFachadas, completarCidades } from './inteligencia.js?v=4';
 import { iniciarLinks, pararLinks } from './links.js?v=2';
 import { marcarEquipe } from '../assets/equipe.js?v=1';
 

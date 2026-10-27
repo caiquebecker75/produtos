@@ -118,6 +118,30 @@ export function iniciarRegistro(P, { toast, ICON, senhaHash, pecas = () => [], n
     return new Promise((resolve) => abrir({ obrigatorio: true, aoConcluir: resolve }));
   }
 
+  // A montagem abre na hora (pedido de 27/10): o registro deixou de travar a página e passou a ser
+  // pedido quando a pessoa chega ao fim do passo a passo. A faixa fica lembrando o tempo todo.
+  function convidarNoFim() {
+    if (jaRegistrou()) return;
+    faixa();
+    const secoes = document.querySelectorAll('main section, body > section, .sec');
+    const fim = secoes[secoes.length - 1];
+    if (!fim || !('IntersectionObserver' in window)) return;
+    let marcado = false;
+    let espera = null;
+    const olho = new IntersectionObserver((entradas) => {
+      const visivel = entradas.some((e) => e.isIntersecting);
+      if (!visivel) { clearTimeout(espera); espera = null; return; }
+      if (marcado || espera) return;
+      espera = setTimeout(() => {
+        if (marcado || jaRegistrou() || $('.sheet-bg')) return;
+        marcado = true;
+        olho.disconnect();
+        abrir({ fim: true });
+      }, 1200);
+    }, { threshold: 0.25 });
+    olho.observe(fim);
+  }
+
   function faixa() {
     if ($('.faixa-reg') || botao()?.classList.contains('ok')) return;
     const f = document.createElement('div');
@@ -130,6 +154,7 @@ export function iniciarRegistro(P, { toast, ICON, senhaHash, pecas = () => [], n
   // modo.obrigatorio: sem X, fundo da marca, só sai registrando · modo.aoConcluir: chamado ao terminar
   function abrir(modo = {}) {
     if ($('.sheet-bg')) return;
+    pulso(P.slug, 'registro');
     db(); // já vai baixando o Firebase
     if (geo.estado === 'parado' || geo.estado === 'tempo' || geo.estado === 'erro') pedirLocalizacao();
     const pessoa = ler('reg75:pessoa') || {};
@@ -143,6 +168,7 @@ export function iniciarRegistro(P, { toast, ICON, senhaHash, pecas = () => [], n
           <h2 id="reg-titulo">Onde ${nomes.length > 1 ? 'as peças' : 'a peça'} <b>${nomes.length > 1 ? 'estão sendo instaladas?' : 'está sendo instalada?'}</b></h2>
           <p class="peca">${esc(P.cliente)} · ${esc(P.nome)} ${esc(P.linha || '')}</p>
           ${modo.obrigatorio ? '<p class="reg-aviso">Antes de ver a montagem, registre <b>quem está instalando</b> e <b>em qual loja</b>.</p>' : ''}
+          ${modo.fim ? '<p class="reg-aviso">Montagem concluída? Registre <b>em qual loja</b> a peça ficou para fechar a execução.</p>' : ''}
           ${nomes.length ? `<div class="reg-pecas"><span>Peças: <b>${esc(nomes.join(', '))}</b></span>${trocarPecas ? '<button type="button" class="link-btn" data-reg-trocar>Trocar</button>' : ''}</div>` : ''}
           <label class="campo"><span>Seu nome</span><input name="nome" autocomplete="name" required minlength="2" maxlength="80" value="${esc(pessoa.nome || '')}" placeholder="Nome e sobrenome"></label>
           <label class="campo"><span>Telefone (WhatsApp)</span><input name="telefone" type="tel" inputmode="tel" autocomplete="tel-national" required value="${esc(mascara(soDigitos(pessoa.telefone || '')))}" placeholder="(11) 91234-5678"></label>
@@ -179,7 +205,7 @@ export function iniciarRegistro(P, { toast, ICON, senhaHash, pecas = () => [], n
     const fechar = () => {
       bg.remove();
       document.body.style.overflow = '';
-      if (veioDoQR) faixa();
+      if (!jaRegistrou()) faixa(); // fechou sem registrar: o lembrete continua no rodapé
     };
     $('.fechar', bg)?.addEventListener('click', fechar); // só fecha no X (clicar fora não perde o que foi digitado)
     $('[data-reg-trocar]', bg)?.addEventListener('click', async () => {
@@ -331,5 +357,5 @@ export function iniciarRegistro(P, { toast, ICON, senhaHash, pecas = () => [], n
   }
 
   document.addEventListener('click', (e) => { if (e.target.closest('#btn-reg')) abrir(); });
-  return { abrir, atualizarBotao, exigir, jaRegistrou };
+  return { abrir, atualizarBotao, exigir, convidarNoFim, jaRegistrou };
 }

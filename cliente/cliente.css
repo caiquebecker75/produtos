@@ -41,3 +41,4 @@
 .fechada-card img { height: 48px; width: auto; margin-bottom: 26px; }
 .fechada-card h1 { font-weight: 200; text-transform: uppercase; font-size: clamp(30px, 7vw, 44px); line-height: .96; letter-spacing: -.5px; }
 .fechada-card p { color: var(--ink2); margin-top: 14px; font-size: 15px; }
+
