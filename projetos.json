@@ -1,5 +1,51 @@
 [
   {
+    "slug": "panco-pecas-pdv",
+    "cliente": "Panco",
+    "nome": "Peças de PDV Panco",
+    "cor": "#8D5A2B",
+    "sigla": "PN",
+    "criado": "2026-10-29",
+    "pecas": [
+      {
+        "id": "categoria",
+        "nome": "Peças de categoria"
+      },
+      {
+        "id": "wobbler",
+        "nome": "Wobbler"
+      },
+      {
+        "id": "stopper",
+        "nome": "Stopper"
+      },
+      {
+        "id": "cubo",
+        "nome": "Cubo"
+      },
+      {
+        "id": "modulo-central",
+        "nome": "Módulo central"
+      },
+      {
+        "id": "modulo-cabeceira",
+        "nome": "Módulo cabeceira"
+      },
+      {
+        "id": "ilha-1-palete",
+        "nome": "Ilha de 1 palete"
+      },
+      {
+        "id": "ilha-2-paletes",
+        "nome": "Ilha de 2 paletes"
+      },
+      {
+        "id": "portico",
+        "nome": "Pórtico modular"
+      }
+    ]
+  },
+  {
     "slug": "lactalis-president-display-fatiados",
     "cliente": "Président (Lactalis)",
     "nome": "Display Organizador Fatiados",
