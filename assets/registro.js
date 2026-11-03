@@ -15,7 +15,7 @@ const CAM = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-w
 const PIN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>';
 
 // ---------- localização ----------
-const geo = { estado: 'parado', pos: null, espera: [] };
+const geo = { estado: 'parado', pos: null, espera: [], aviso: null };
 function pedirLocalizacao() {
   if (!('geolocation' in navigator)) { setGeo('indisponivel'); return; }
   if (geo.estado === 'buscando') return;
@@ -31,8 +31,19 @@ function pedirLocalizacao() {
 }
 function setGeo(estado) {
   geo.estado = estado;
-  if (estado !== 'buscando') { geo.espera.forEach((r) => r()); geo.espera = []; }
+  if (estado !== 'buscando') {
+    geo.espera.forEach((r) => r()); geo.espera = [];
+    if (geo.aviso) { const f = geo.aviso; geo.aviso = null; f(estado); }
+  }
   desenharGeo();
+}
+
+// pedida já na abertura da página, logo depois de escanear o QR (pedido de 03/11/2026): quando a pessoa
+// chega no registro o ponto já está na mão, em vez de esperar o GPS com o formulário preenchido.
+// `aoResultado` recebe o estado final ('ok', 'negado', 'tempo', 'erro', 'indisponivel').
+export function prepararLocalizacao(aoResultado) {
+  if (aoResultado) geo.aviso = aoResultado;
+  pedirLocalizacao();
 }
 const aguardarGeo = (ms) => (geo.estado !== 'buscando' ? Promise.resolve()
   : new Promise((r) => { geo.espera.push(r); setTimeout(r, ms); }));

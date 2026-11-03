@@ -3,7 +3,7 @@
 // — depois da senha, a pessoa escolhe as peças que vai executar e a página mostra só essas
 // (o registro de instalação guarda quais foram). Blocos sem dados simplesmente não aparecem.
 // Texto aceita **negrito**. Ver modelo/index.html para os campos.
-import { iniciarRegistro } from './registro.js?v=10';
+import { iniciarRegistro, prepararLocalizacao } from './registro.js?v=11';
 import { exigirSenha, pecasDesligadas, telaSemPecas } from './acesso.js?v=4';
 import { escolherPecas } from './selecao.js?v=2';
 import { modoEquipe, tarjaEquipe } from './equipe.js?v=1';
@@ -554,6 +554,23 @@ function iniciarCapitulos(sec) {
 const EQUIPE = modoEquipe();
 pulso(P.slug, 'abriu'); // marca a abertura antes de qualquer tela (é o que prova que escanearam)
 const senhaHash = EQUIPE ? (() => { try { return localStorage.getItem(`acesso75:${P.slug}`); } catch { return null; } })() : await exigirSenha(P);
+
+// localização logo na abertura: o celular pergunta antes de a pessoa escolher as peças, e no registro
+// o ponto já está pronto. Na prévia da equipe não faz sentido pedir.
+if (!EQUIPE) {
+  prepararLocalizacao((estado) => {
+    if (estado === 'ok') return;
+    const msg = {
+      negado: 'A localização é obrigatória para registrar a instalação. Libere no cadeado ao lado do endereço.',
+      indisponivel: 'Este navegador não informa a localização. Abra o link no Safari (iPhone) ou no Chrome (Android).',
+    }[estado] || 'Não deu para pegar a localização agora. Na hora de registrar dá para tentar de novo.';
+    // o .toast só existe depois que a página monta; se a resposta vier antes, espera
+    (function avisar(n) {
+      if ($('.toast')) toast(msg);
+      else if (n < 60) setTimeout(() => avisar(n + 1), 250);
+    })(0);
+  });
+}
 
 // peças desabilitadas no painel somem da escolha, da página e do registro (KIT e P.kit são o mesmo array)
 // na prévia da equipe a página mostra o enxoval inteiro, inclusive o que está desabilitado

@@ -81,7 +81,7 @@ section { position: relative; }
 .cliente-nome { font-family: var(--anton); font-size: 14px; letter-spacing: 2.6px; text-transform: uppercase; margin-bottom: 18px; }
 .hero h1 {
   font-weight: 200; text-transform: uppercase; letter-spacing: -1px; line-height: .9;
-  font-size: clamp(34px, 10.2vw, 104px); overflow-wrap: anywhere;
+  font-size: clamp(34px, 10.2vw, 104px); overflow-wrap: break-word;
 }
 .hero h1 b { font-weight: 600; display: block; }
 .hero .sub { font-size: clamp(18px, 2.6vw, 26px); font-weight: 300; margin-top: 16px; }
@@ -353,7 +353,7 @@ section { position: relative; }
 .peca-cap-in { display: grid; gap: 22px; align-items: center; }
 .peca-num { font-family: var(--anton); font-size: clamp(44px, 9vw, 88px); line-height: .9; letter-spacing: 1px; }
 .peca-num small { font-size: .38em; color: var(--ink2); margin-left: 4px; }
-.peca-cap h2 { font-weight: 200; text-transform: uppercase; font-size: clamp(34px, 7vw, 64px); line-height: .95; margin-top: 12px; letter-spacing: -.5px; overflow-wrap: anywhere; }
+.peca-cap h2 { font-weight: 200; text-transform: uppercase; font-size: clamp(34px, 7vw, 64px); line-height: .95; margin-top: 12px; letter-spacing: -.5px; overflow-wrap: break-word; }
 .peca-cap h2 b { font-weight: 600; }
 .peca-tipo { margin-top: 10px; color: var(--ink); opacity: .8; font-size: 15px; }
 .peca-obj { margin-top: 14px; font-size: 16px; max-width: 52ch; }
@@ -386,7 +386,7 @@ section { position: relative; }
 .porta-logo { height: 40px; width: auto; margin-bottom: 26px; }
 .porta-cliente { height: 42px; width: auto; margin-bottom: 14px; }
 .porta-eyebrow { font-family: var(--anton); font-size: 13px; letter-spacing: 2.4px; text-transform: uppercase; color: var(--ink2); margin-bottom: 10px; }
-.porta h1 { font-weight: 200; text-transform: uppercase; font-size: clamp(30px, 8.6vw, 42px); line-height: .95; letter-spacing: -.4px; overflow-wrap: anywhere; }
+.porta h1 { font-weight: 200; text-transform: uppercase; font-size: clamp(30px, 8.6vw, 42px); line-height: .95; letter-spacing: -.4px; overflow-wrap: break-word; }
 .porta h1 b { font-weight: 600; display: block; }
 .porta-txt { margin-top: 14px; font-size: 15px; color: var(--ink2); }
 .porta-txt b { color: var(--ink); }

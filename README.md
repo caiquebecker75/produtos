@@ -6,6 +6,9 @@ Toda peça produzida pela 75 LAB sai com uma página de produto e um **QR code i
 - **Senha de acesso:** cada página só abre com a senha definida no painel (card "Projetos e senhas"). Vale para o QR e para o link.
 - **Acesso livre:** botão "Liberar sem senha" no painel, por página. A página abre direto e o registro entra sem senha; "Exigir senha" volta a pedir a senha guardada.
 - **No ar / fora do ar:** botão no painel. Fora do ar, o link e o QR mostram "Página fora do ar" (sem senha e sem conteúdo) e nenhum registro é aceito.
+- **Localização na abertura:** assim que a página abre, logo depois de escanear o QR, o celular já pergunta pela
+  localização; quando a pessoa chega no registro o ponto já está pronto. Se ela negar, um aviso aparece na hora.
+  (`prepararLocalizacao` em `assets/registro.js`, chamada pelo `produto.js` antes da escolha de peças.)
 - **Registro obrigatório:** pelo QR ou pelo link, depois da senha (e da escolha de peças) a página só abre depois do mini questionário (nome, telefone, loja) com a **localização do aparelho**. A tela não tem X.
   A **localização é obrigatória**: sem ela o botão não envia (mostra como liberar no iPhone e no Android) e as regras recusam registro com `geo` nulo.
   Pula só se o aparelho já registrou as mesmas peças nas últimas 12 h. Sem internet na loja, aparece a opção de ver a montagem e registrar quando o sinal voltar. `?qr=1` só marca a origem "QR code" no painel.
