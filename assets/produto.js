@@ -555,23 +555,6 @@ const EQUIPE = modoEquipe();
 pulso(P.slug, 'abriu'); // marca a abertura antes de qualquer tela (é o que prova que escanearam)
 const senhaHash = EQUIPE ? (() => { try { return localStorage.getItem(`acesso75:${P.slug}`); } catch { return null; } })() : await exigirSenha(P);
 
-// localização logo na abertura: o celular pergunta antes de a pessoa escolher as peças, e no registro
-// o ponto já está pronto. Na prévia da equipe não faz sentido pedir.
-if (!EQUIPE) {
-  prepararLocalizacao((estado) => {
-    if (estado === 'ok') return;
-    const msg = {
-      negado: 'A localização é obrigatória para registrar a instalação. Libere no cadeado ao lado do endereço.',
-      indisponivel: 'Este navegador não informa a localização. Abra o link no Safari (iPhone) ou no Chrome (Android).',
-    }[estado] || 'Não deu para pegar a localização agora. Na hora de registrar dá para tentar de novo.';
-    // o .toast só existe depois que a página monta; se a resposta vier antes, espera
-    (function avisar(n) {
-      if ($('.toast')) toast(msg);
-      else if (n < 60) setTimeout(() => avisar(n + 1), 250);
-    })(0);
-  });
-}
-
 // peças desabilitadas no painel somem da escolha, da página e do registro (KIT e P.kit são o mesmo array)
 // na prévia da equipe a página mostra o enxoval inteiro, inclusive o que está desabilitado
 if (KIT && !EQUIPE) {
@@ -603,6 +586,24 @@ if (KIT) {
     : KIT.length === 1 ? [KIT[0].id]
     : daUrl.length && !new URLSearchParams(location.search).has('qr') ? daUrl : (pulso(P.slug, 'pecas'), await escolherPecas(P, { inicial: daUrl.length ? daUrl : anterior }));
   guardarSelecao(sel);
+}
+
+// localização pedida assim que as peças estão escolhidas (pedido de 03/11/2026): o celular pergunta
+// antes de a pessoa começar a montagem, e no registro o ponto já está pronto.
+// Na prévia da equipe não faz sentido pedir.
+if (!EQUIPE) {
+  prepararLocalizacao((estado) => {
+    if (estado === 'ok') return;
+    const msg = {
+      negado: 'A localização é obrigatória para registrar a instalação. Libere no cadeado ao lado do endereço.',
+      indisponivel: 'Este navegador não informa a localização. Abra o link no Safari (iPhone) ou no Chrome (Android).',
+    }[estado] || 'Não deu para pegar a localização agora. Na hora de registrar dá para tentar de novo.';
+    // o .toast só existe depois que a página monta; se a resposta vier antes, espera
+    (function avisar(n) {
+      if ($('.toast')) toast(msg);
+      else if (n < 60) setTimeout(() => avisar(n + 1), 250);
+    })(0);
+  });
 }
 
 let montada = false;
