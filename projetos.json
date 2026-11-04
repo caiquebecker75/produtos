@@ -1,5 +1,13 @@
 [
   {
+    "slug": "bombril-torre-la-de-aco",
+    "cliente": "Grupo Bombril",
+    "nome": "Torre de lã de aço e esponjas TR06",
+    "cor": "#F783AC",
+    "sigla": "TL",
+    "criado": "2026-11-04"
+  },
+  {
     "slug": "ngv-displays",
     "cliente": "NGV",
     "nome": "Displays NGV",
