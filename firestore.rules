@@ -217,6 +217,21 @@ service cloud.firestore {
       allow update: if false;
     }
 
+    /* ---------------------------------------------------------------- pesquisa Raio-X do PDV
+       pesquisa_raiox/{id}: respostas do questionário público em 75lab.com.br/raio-x-pdv.html
+       (16/11/2026). Qualquer um cria uma resposta; só a equipe lê e apaga; ninguém altera. */
+    match /pesquisa_raiox/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['respostas', 'email', 'consentimento', 'origem', 'criadoEm'])
+        && request.resource.data.respostas is map
+        && request.resource.data.respostas.size() <= 20
+        && (request.resource.data.email == '' || texto(request.resource.data.email, 5, 120))
+        && request.resource.data.consentimento is bool
+        && texto(request.resource.data.origem, 0, 60)
+        && request.resource.data.criadoEm == request.time;
+      allow get, list, delete: if equipe75();
+      allow update: if false;
+    }
+
     match /{doc=**} {
       allow read, write: if false;
     }
