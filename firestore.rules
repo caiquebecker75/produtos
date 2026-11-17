@@ -232,6 +232,24 @@ service cloud.firestore {
       allow update: if false;
     }
 
+    /* ---------------------------------------------------------------- Café de Trade
+       cafe_trade/{id}: pré-inscrições do encontro em 75lab.com.br/cafe-de-trade.html (17/11/2026).
+       Qualquer um cria; só a equipe lê e apaga; ninguém altera. */
+    match /cafe_trade/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['nome', 'cargo', 'empresa', 'email', 'celular', 'tema', 'consentimento', 'origem', 'criadoEm'])
+        && texto(request.resource.data.nome, 2, 80)
+        && texto(request.resource.data.cargo, 2, 80)
+        && texto(request.resource.data.empresa, 2, 80)
+        && texto(request.resource.data.email, 5, 120)
+        && texto(request.resource.data.celular, 0, 30)
+        && texto(request.resource.data.tema, 0, 300)
+        && request.resource.data.consentimento == true
+        && texto(request.resource.data.origem, 0, 60)
+        && request.resource.data.criadoEm == request.time;
+      allow get, list, delete: if equipe75();
+      allow update: if false;
+    }
+
     match /{doc=**} {
       allow read, write: if false;
     }
