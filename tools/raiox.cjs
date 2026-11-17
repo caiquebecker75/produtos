@@ -2,6 +2,7 @@
 // com o login do Firebase CLI deste Mac (dono do projeto). As regras bloqueiam leitura anônima de propósito.
 //   node tools/raiox.cjs resumo          contagem total, por origem e por resposta (JSON numa linha)
 //   node tools/raiox.cjs csv <arquivo>   exporta todas as respostas (sem e-mail de quem não autorizou)
+//   node tools/raiox.cjs cafe            pré-inscrições do Café de Trade (coleção cafe_trade)
 const FT = '/Users/caiquebecker/.nvm/versions/node/v24.18.0/lib/node_modules/firebase-tools/lib/';
 const auth = require(FT + 'auth');
 const { requireAuth } = require(FT + 'requireAuth');
@@ -15,12 +16,18 @@ const val = v => v == null ? '' : v.stringValue ?? v.booleanValue ?? v.timestamp
   const c = new Client({ urlPrefix: 'https://firestore.googleapis.com', apiVersion: 'v1', auth: true });
   let docs = [], page = '';
   do {
-    const r = await c.get(`projects/instalacoes-75lab/databases/(default)/documents/pesquisa_raiox`, { queryParams: { pageSize: 300, ...(page ? { pageToken: page } : {}) } });
+    const COL = process.argv[2] === 'cafe' ? 'cafe_trade' : 'pesquisa_raiox';
+    const r = await c.get(`projects/instalacoes-75lab/databases/(default)/documents/${COL}`, { queryParams: { pageSize: 300, ...(page ? { pageToken: page } : {}) } });
     docs = docs.concat(r.body.documents || []); page = r.body.nextPageToken;
   } while (page);
   const linhas = docs.map(d => { const f = d.fields || {}; return { id: d.name.split('/').pop(), criadoEm: val(f.criadoEm), origem: val(f.origem), email: val(f.consentimento) === true ? val(f.email) : '', ...val(f.respostas) }; })
     .filter(l => !String(l.origem).startsWith('teste'));
   const modo = process.argv[2] || 'resumo';
+  if (modo === 'cafe') {
+    const ins = docs.map(d => { const f = d.fields || {}; return { nome: val(f.nome), cargo: val(f.cargo), empresa: val(f.empresa), email: val(f.email), tema: val(f.tema), origem: val(f.origem), criadoEm: val(f.criadoEm) }; }).filter(l => !String(l.origem).startsWith('teste'));
+    console.log(JSON.stringify({ ok: true, preinscritos: ins.length, lista: ins }));
+    return;
+  }
   if (modo === 'csv') {
     const cols = [...new Set(linhas.flatMap(Object.keys))];
     const q = s => '"' + String(s ?? '').replace(/"/g, '""') + '"';
