@@ -3,6 +3,7 @@
 //   node tools/raiox.cjs resumo          contagem total, por origem e por resposta (JSON numa linha)
 //   node tools/raiox.cjs csv <arquivo>   exporta todas as respostas (sem e-mail de quem não autorizou)
 //   node tools/raiox.cjs cafe            pré-inscrições do Café de Trade (coleção cafe_trade)
+//   node tools/raiox.cjs kit             cadastros de quem baixou kits do site (coleção kit_pdv)
 const FT = '/Users/caiquebecker/.nvm/versions/node/v24.18.0/lib/node_modules/firebase-tools/lib/';
 const auth = require(FT + 'auth');
 const { requireAuth } = require(FT + 'requireAuth');
@@ -16,7 +17,7 @@ const val = v => v == null ? '' : v.stringValue ?? v.booleanValue ?? v.timestamp
   const c = new Client({ urlPrefix: 'https://firestore.googleapis.com', apiVersion: 'v1', auth: true });
   let docs = [], page = '';
   do {
-    const COL = process.argv[2] === 'cafe' ? 'cafe_trade' : 'pesquisa_raiox';
+    const COL = process.argv[2] === 'cafe' ? 'cafe_trade' : process.argv[2] === 'kit' ? 'kit_pdv' : 'pesquisa_raiox';
     const r = await c.get(`projects/instalacoes-75lab/databases/(default)/documents/${COL}`, { queryParams: { pageSize: 300, ...(page ? { pageToken: page } : {}) } });
     docs = docs.concat(r.body.documents || []); page = r.body.nextPageToken;
   } while (page);
@@ -26,6 +27,11 @@ const val = v => v == null ? '' : v.stringValue ?? v.booleanValue ?? v.timestamp
   if (modo === 'cafe') {
     const ins = docs.map(d => { const f = d.fields || {}; return { nome: val(f.nome), cargo: val(f.cargo), empresa: val(f.empresa), email: val(f.email), tema: val(f.tema), origem: val(f.origem), criadoEm: val(f.criadoEm) }; }).filter(l => !String(l.origem).startsWith('teste'));
     console.log(JSON.stringify({ ok: true, preinscritos: ins.length, lista: ins }));
+    return;
+  }
+  if (modo === 'kit') {
+    const ins = docs.map(d => { const f = d.fields || {}; return { nome: val(f.nome), cargo: val(f.cargo), empresa: val(f.empresa), email: val(f.email), kit: val(f.kit), consentimento: val(f.consentimento), origem: val(f.origem), criadoEm: val(f.criadoEm) }; }).filter(l => !String(l.origem).startsWith('teste')).sort((a, b) => a.criadoEm < b.criadoEm ? 1 : -1);
+    console.log(JSON.stringify({ ok: true, cadastros: ins.length, lista: ins }));
     return;
   }
   if (modo === 'csv') {
