@@ -232,6 +232,23 @@ service cloud.firestore {
       allow update: if false;
     }
 
+    /* ---------------------------------------------------------------- Kits de PDV
+       kit_pdv/{id}: cadastros de quem baixa kits em 75lab.com.br (ex.: kit-pascoa-2027.html, 17/11/2026).
+       Qualquer um cria; só a equipe lê e apaga; ninguém altera. */
+    match /kit_pdv/{id} {
+      allow create: if request.resource.data.keys().hasOnly(['nome', 'cargo', 'empresa', 'email', 'kit', 'consentimento', 'origem', 'criadoEm'])
+        && texto(request.resource.data.nome, 2, 80)
+        && texto(request.resource.data.cargo, 2, 80)
+        && texto(request.resource.data.empresa, 2, 80)
+        && texto(request.resource.data.email, 5, 120)
+        && texto(request.resource.data.kit, 2, 40)
+        && request.resource.data.consentimento is bool
+        && texto(request.resource.data.origem, 0, 60)
+        && request.resource.data.criadoEm == request.time;
+      allow get, list, delete: if equipe75();
+      allow update: if false;
+    }
+
     /* ---------------------------------------------------------------- Café de Trade
        cafe_trade/{id}: pré-inscrições do encontro em 75lab.com.br/cafe-de-trade.html (17/11/2026).
        Qualquer um cria; só a equipe lê e apaga; ninguém altera. */
