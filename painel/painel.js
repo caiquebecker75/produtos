@@ -5,6 +5,7 @@ import { estiloProjeto, htmlMarcador } from './marcadores.js?v=1';
 import { desenhar as desenharIntel, desenharFachadas, completarCidades } from './inteligencia.js?v=4';
 import { iniciarLinks, pararLinks } from './links.js?v=2';
 import { marcarEquipe } from '../assets/equipe.js?v=1';
+import { montarCampanhas } from './campanhas.js?v=1';
 
 const [{ initializeApp }, A, F] = await Promise.all([
   import(`${FIREBASE_SDK}/firebase-app.js`),
@@ -85,6 +86,7 @@ A.onAuthStateChanged(auth, async (user) => {
   marcarEquipe(user.email); // libera a prévia das páginas neste navegador por 12 h
   telas('painel');
   iniciar();
+  montarCampanhas(toast);   // atalhos das campanhas com QR por vendedor (outro repositório)
 });
 
 // ---------------------------------------------------------------- dados

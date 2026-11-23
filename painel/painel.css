@@ -389,3 +389,10 @@ b { font-weight: 500; }
 .fachada-abrir { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; background: none; cursor: zoom-in; display: block; }
 .fachada-abrir img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform .25s ease; }
 .fachada-abrir:hover img { transform: scale(1.04); }
+
+/* campanhas com QR por vendedor (o painel de cada um vive no repositório da campanha) */
+.pj-bts { display: flex; gap: 8px; flex-wrap: wrap; }
+.vendedores { list-style: none; display: grid; gap: 6px; margin-top: 4px; max-height: 320px; overflow-y: auto; padding-right: 4px; }
+.vendedores li { display: flex; align-items: center; gap: 8px; background: #fff; border-radius: 14px; padding: 7px 8px 7px 13px; font-size: 13.5px; }
+.vendedores li span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vendedores .bt-ic { box-shadow: inset 0 0 0 1px var(--rule); }
