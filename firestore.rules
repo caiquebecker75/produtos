@@ -301,10 +301,11 @@ service cloud.firestore {
 
     /* qrv_leads/{id}: o contato que a pessoa deixou antes de ir para o WhatsApp do vendedor.
        Aqui TEM dado pessoal, então a porta é de mão única: qualquer um cria (quem escaneou não tem
-       login) e só a equipe 75 LAB lê, exporta e apaga. Nenhum link aberto mostra nome ou telefone;
-       o vendedor recebe o contato na própria conversa do WhatsApp. */
+       login) e lê quem entra: a equipe 75 LAB e o vendedor dono do código. Nenhum link aberto mostra
+       nome, telefone ou mapa. geo é opcional: só entra se a pessoa permitir a localização. */
     match /qrv_leads/{id} {
-      allow create: if request.resource.data.keys().hasOnly(['codigo', 'nome', 'telefone', 'consentimento', 'so', 'dia', 'criadoEm'])
+      allow create: if request.resource.data.keys().hasOnly(['codigo', 'nome', 'telefone', 'consentimento', 'so', 'dia', 'criadoEm', 'geo'])
+        && geoValida(request.resource.data.get('geo', null))
         && slugValido(request.resource.data.codigo)
         && texto(request.resource.data.nome, 2, 80)
         && texto(request.resource.data.telefone, 10, 20)
