@@ -13,15 +13,6 @@ service cloud.firestore {
         && request.auth.token.email.lower().matches('.*@75lab[.]com[.]br$');
     }
 
-    // dono de um codigo de QR por vendedor: login Google cujo e-mail a equipe cadastrou em
-    // qrv_vendedores/{codigo}. Com isso o vendedor ve os contatos do QR dele sem ver os dos outros.
-    function vendedorDoCodigo(codigo) {
-      return request.auth != null
-        && request.auth.token.get('email_verified', false) == true
-        && exists(/databases/$(database)/documents/qrv_vendedores/$(codigo))
-        && get(/databases/$(database)/documents/qrv_vendedores/$(codigo)).data.get('email', '') == request.auth.token.email.lower();
-    }
-
     function texto(v, min, max) {
       return v is string && v.size() >= min && v.size() <= max;
     }
@@ -301,8 +292,12 @@ service cloud.firestore {
 
     /* qrv_leads/{id}: o contato que a pessoa deixou antes de ir para o WhatsApp do vendedor.
        Aqui TEM dado pessoal, então a porta é de mão única: qualquer um cria (quem escaneou não tem
-       login) e lê quem entra: a equipe 75 LAB e o vendedor dono do código. Nenhum link aberto mostra
-       nome, telefone ou mapa. geo é opcional: só entra se a pessoa permitir a localização. */
+       login) e lê quem tem o link do painel, sem login. Foi decisão do cliente em 23/11/2026: cada
+       vendedor acompanha os próprios contatos pelo link que recebe, sem conta e sem senha. Quem tiver
+       o endereço do painel vê nome, telefone e mapa, então o link não é para circular fora da equipe
+       e dos vendedores. Para voltar a fechar, troque o allow get, list por equipe75() e volte o
+       cadastro de dono em qrv_vendedores (está no histórico do repositório, 23/11).
+       geo é opcional: só entra se a pessoa permitir a localização no celular. */
     match /qrv_leads/{id} {
       allow create: if request.resource.data.keys().hasOnly(['codigo', 'nome', 'telefone', 'consentimento', 'so', 'dia', 'criadoEm', 'geo'])
         && geoValida(request.resource.data.get('geo', null))
@@ -315,18 +310,12 @@ service cloud.firestore {
         && request.resource.data.dia.matches('^20[0-9]{2}-[0-9]{2}-[0-9]{2}$')
         && request.resource.data.criadoEm is string
         && request.resource.data.criadoEm.size() <= 30;
-      allow get, list: if equipe75() || vendedorDoCodigo(resource.data.codigo);
+      allow get, list: if true;
       allow delete: if equipe75();
       allow update: if false;
     }
 
-    /* qrv_vendedores/{codigo}: quem e o dono de cada codigo de QR por vendedor. Guarda so o e-mail
-       de login dele, cadastrado pela equipe 75 LAB. E o que deixa a regra acima liberar para o
-       vendedor os contatos que chegaram pelo QR dele, e so os dele. Nao e link aberto: o cliente nao
-       le esta colecao, quem le e a propria regra (get() de regra nao usa permissao de leitura). */
-    match /qrv_vendedores/{codigo} {
-      allow get, list, write: if equipe75();
-    }
+
 
     match /{doc=**} {
       allow read, write: if false;
